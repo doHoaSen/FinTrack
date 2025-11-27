@@ -6,6 +6,6 @@ import lombok.Getter;
 @Getter
 @AllArgsConstructor
 public class WeekdayStatsDto {
-        private int weekday; // 1~7
-        private long amount;
+        private Integer weekday; // 1~7
+        private Long amount;
 }

@@ -6,6 +6,6 @@ import lombok.Getter;
 @Getter
 @AllArgsConstructor
 public class HourlyStatsDto {
-    private int hour; // 0~23
-    private long amount;
+    private Integer hour; // 0~23
+    private Long amount;
 }

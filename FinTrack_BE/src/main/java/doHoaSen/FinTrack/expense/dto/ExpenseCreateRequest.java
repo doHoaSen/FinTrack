@@ -3,7 +3,7 @@ package doHoaSen.FinTrack.expense.dto;
 import java.time.LocalDateTime;
 
 public record ExpenseCreateRequest (
-        Integer amount,
+        Long amount,
         String category,
         String memo,
         LocalDateTime dateTime
