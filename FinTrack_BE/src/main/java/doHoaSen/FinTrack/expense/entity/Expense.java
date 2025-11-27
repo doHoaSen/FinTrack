@@ -22,7 +22,7 @@ public class Expense {
     @ManyToOne(fetch = FetchType.LAZY)
     private User user;
 
-    private Integer amount;
+    private Long amount;
     private String category;
     private String memo;
     private LocalDateTime dateTime;
