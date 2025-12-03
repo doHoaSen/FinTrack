@@ -71,7 +71,7 @@ public class ExpenseFeedbackRepository {
             SELECT SUM(amount)
             FROM expense
             WHERE user_id = :userId
-              AND DATE_TRUNC('month', date_time)=DATE_TRUNC('month', :target)
+              AND DATE_TRUNC('month', date_time)=DATE_TRUNC('month', CAST(:target AS timestamp)) 
         """;
 
         Object result = em.createNativeQuery(sql)
@@ -90,7 +90,7 @@ public class ExpenseFeedbackRepository {
                 SELECT DATE(date_time), SUM(amount) AS daily_sum
                 FROM expense
                 WHERE user_id = :userId
-                  AND DATE_TRUNC('month', date_time)=DATE_TRUNC('month', :lm)
+                  AND DATE_TRUNC('month', date_time)=DATE_TRUNC('month', CAST(:lm AS timestamp))
                 GROUP BY DATE(date_time)
             ) t
         """;

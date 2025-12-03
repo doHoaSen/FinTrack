@@ -40,4 +40,11 @@ public class User {
     public void preUpdate(){
         this.updatedAt = LocalDateTime.now();
     }
+
+    public static User fake(Long id) {
+        User u = new User();
+        u.setId(id);
+        return u;
+    }
+
 }

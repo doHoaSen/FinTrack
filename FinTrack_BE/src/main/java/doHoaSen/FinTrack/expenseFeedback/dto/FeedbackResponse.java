@@ -1,9 +1,12 @@
 package doHoaSen.FinTrack.expenseFeedback.dto;
 
+import lombok.AllArgsConstructor;
 import lombok.Getter;
+import lombok.NoArgsConstructor;
 import lombok.Setter;
 
 @Getter @Setter
+
 public class FeedbackResponse {
     private String monthlyTrend;
     private String weekdayPattern;
@@ -16,4 +19,6 @@ public class FeedbackResponse {
     private String dailyAverageTrend;
     private String spikeDetection;
     private String overSpendSequence;
+
+
 }
