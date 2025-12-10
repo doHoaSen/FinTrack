@@ -7,6 +7,7 @@ import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 
 import java.time.YearMonth;
+import java.util.Optional;
 
 @Service
 @RequiredArgsConstructor
@@ -14,18 +15,19 @@ public class TargetService {
     private final TargetRepository targetRepository;
 
     // 이번달 목표 조회
-    public Target getCurrentTarget(Long userId){
+    public Optional<Target> getCurrentTarget(Long userId){
         YearMonth now = YearMonth.now();
         return targetRepository.findByUserIdAndYearAndMonth(
                 userId,
                 now.getYear(),
                 now.getMonthValue()
-        ).orElse(null);
+        );
     }
 
     // 목표 생성 및 수정
     public Target upsertTarget(Long userId, Long amount){
         YearMonth now = YearMonth.now();
+
         Target target = targetRepository.findByUserIdAndYearAndMonth(
                 userId,
                 now.getYear(),
@@ -41,4 +43,11 @@ public class TargetService {
         target.setTargetAmount(amount);
         return targetRepository.save(target);
     }
+
+
+    // 삭제
+    public void deleteThisMonthTarget(Long userId) {
+        getCurrentTarget(userId).ifPresent(targetRepository::delete);
+    }
+
 }

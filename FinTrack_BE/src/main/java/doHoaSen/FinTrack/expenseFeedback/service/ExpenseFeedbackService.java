@@ -10,11 +10,9 @@ import doHoaSen.FinTrack.target.service.TargetService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 
+import java.time.LocalDate;
 import java.time.YearMonth;
-import java.util.Comparator;
-import java.util.List;
-import java.util.Map;
-import java.util.Set;
+import java.util.*;
 
 @Service
 @RequiredArgsConstructor
@@ -26,144 +24,341 @@ public class ExpenseFeedbackService {
     private static final Set<String> FIXED = Set.of("월세", "관리비", "보험", "정기구독", "통신비");
 
     public FeedbackResponse generate(Long userId){
-        FeedbackResponse response = new FeedbackResponse();
 
-        // 데이터 준비
         Map<String, Long> category = expenseFeedbackRepository.getCategoryTotals(userId);
         List<DayExpense> daily = expenseFeedbackRepository.getDailyTotals(userId);
 
-        response.setMonthlyTrend(monthlyTrend(userId));
-        response.setWeekdayPattern(weekdayPattern(userId));
-        response.setHourlyPattern(hourlyPattern(userId));
-        response.setCategoryPattern(categoryPattern(category));
-        response.setTargetProgress(targetProgress(userId));
+        FeedbackResponse.FeedbackResponseBuilder builder = FeedbackResponse.builder();
 
-        // 확장 5개
-        response.setFixedVsVariable(fixedVsVariable(category));
-        response.setCategoryConcentration(categoryConcentration(category));
-        response.setDailyAverageTrend(dailyAverageTrend(daily, expenseFeedbackRepository.getLastMonthDailyAverage(userId)));
-        response.setSpikeDetection(spike(daily));
-        response.setOverSpendSequence(overSpendSequence(daily));
+        builder.monthlyTrend(monthlyTrend(userId));
+        builder.weekdayPattern(weekdayPattern(userId));
+        builder.hourlyPattern(hourlyPattern(userId));
+        builder.categoryPattern(categoryPattern(category));
+        builder.targetProgress(targetProgress(userId));
 
-        return response;
+        builder.fixedVsVariable(fixedVsVariable(category));
+        builder.categoryPattern(categoryPattern(category));
+        builder.dailyAverageTrend(dailyAverageTrend(daily, expenseFeedbackRepository.getLastMonthDailyAverage(userId)));
+        builder.spikeDetection(spikeDetection(daily));
+        builder.overSpendSequence(overSpendSequence(daily));
+
+        return builder.build();
     }
 
 
-    private String monthlyTrend(Long userId) {
+
+    /** 2) 전월 대비 분석 */
+    private FeedbackResponse.MonthlyTrend monthlyTrend(Long userId) {
         YearMonth now = YearMonth.now();
         YearMonth last = now.minusMonths(1);
 
         long thisMonth = expenseFeedbackRepository.getMonthlyTotal(userId, now);
         long lastMonth = expenseFeedbackRepository.getMonthlyTotal(userId, last);
 
-        if (lastMonth == 0)
-            return "첫 달 소비라 전월 대비 분석은 제공되지 않습니다.";
+        if (lastMonth == 0) {
+            return FeedbackResponse.MonthlyTrend.builder()
+                    .status("firstMonth")
+                    .currentMonth(thisMonth)
+                    .lastMonth(0L)
+                    .percentDiff(null)
+                    .message("첫 달 소비라 전월 대비 분석은 제공되지 않습니다.")
+                    .build();
+        }
 
         long diff = thisMonth - lastMonth;
         double rate = diff * 100.0 / lastMonth;
 
-        if (diff > 0) return "지난달 대비 " + (int)rate + "% 지출이 증가했습니다.";
-        return "지난달 대비 지출이 감소했습니다.";
+        return FeedbackResponse.MonthlyTrend.builder()
+                .status(rate > 0 ? "increase" : "decrease")
+                .currentMonth(thisMonth)
+                .lastMonth(lastMonth)
+                .percentDiff(rate)
+                .message(rate > 0
+                        ? String.format("지난달 대비 %.1f%% 지출이 증가했습니다.", rate)
+                        : String.format("지난달 대비 %.1f%% 지출이 감소했습니다.", Math.abs(rate)))
+                .build();
     }
 
-    private String weekdayPattern(Long userId) {
+    /** 3) 요일 패턴 */
+    private FeedbackResponse.WeekdayPattern weekdayPattern(Long userId) {
         var stats = expenseQueryRepository.getWeekdayStats(userId);
-        if(stats.isEmpty()) return "요일별 지출 데이터가 없습니다.";
+        if (stats.isEmpty()) {
+            return FeedbackResponse.WeekdayPattern.builder()
+                    .message("요일별 지출 데이터가 없습니다.")
+                    .build();
+        }
 
-        var max = stats.stream().max(Comparator.comparing(WeekdayStatsDto::getAmount)).get();
-        return max.getWeekday() + "요일 소비가 가장 많습니다.";
+        var peak = stats.stream().max(Comparator.comparing(WeekdayStatsDto::getAmount)).get();
+
+        return FeedbackResponse.WeekdayPattern.builder()
+                .peakDay(peak.getWeekday())
+                .peakAmount(peak.getAmount())
+                .message(String.format("%s요일 소비가 가장 많습니다.", toKoreanWeekday(peak.getWeekday())))
+                .build();
     }
 
-    private String hourlyPattern(Long userId) {
+    private String toKoreanWeekday(int isoDay) {
+        return switch (isoDay) {
+            case 1 -> "월";
+            case 2 -> "화";
+            case 3 -> "수";
+            case 4 -> "목";
+            case 5 -> "금";
+            case 6 -> "토";
+            case 7 -> "일";
+            default -> "알 수 없음";
+        };
+    }
+
+    /** 4) 시간대 패턴 */
+    private FeedbackResponse.HourlyPattern hourlyPattern(Long userId) {
         var stats = expenseQueryRepository.getHourlyStats(userId);
-        if (stats.isEmpty()) return "시간대 지출 데이터가 부족합니다.";
+        if (stats.isEmpty()) {
+            return FeedbackResponse.HourlyPattern.builder()
+                    .message("시간대별 지출 데이터가 없습니다.")
+                    .build();
+        }
 
-        var max = stats.stream().max(Comparator.comparing(HourlyStatsDto::getAmount)).get();
-        return max.getHour() + "시 지출이 가장 많습니다.";
+        var peak = stats.stream()
+                .max(Comparator.comparing(HourlyStatsDto::getAmount))
+                .get();
+
+        return FeedbackResponse.HourlyPattern.builder()
+                .peakHour(peak.getHour())
+                .amount(peak.getAmount())
+                .message(String.format("%s 소비가 가장 많습니다.", toKoreanHour(peak.getHour())))
+                .build();
     }
 
-    private String categoryPattern(Map<String, Long> map){
-        if(map.isEmpty()) return "카테고리 지출 데이터가 없습니다.";
+    private String toKoreanHour(int hour) {
+        if (hour == 0) return "오전 12시";
+        if (hour == 12) return "오후 12시";
 
-        var max = map.entrySet().stream().max(Map.Entry.comparingByValue()).get();
-        return max.getKey() + " 지출이 가장 많습니다.";
+        if (hour < 12) return "오전 " + hour + "시";
+        return "오후 " + (hour - 12) + "시";
     }
 
-    private String targetProgress(Long userId) {
-        var target = targetService.getCurrentTarget(userId);
-        if (target == null) return "이번 달 목표가 설정되어 있지 않습니다.";
+
+    /** 5) 카테고리 패턴 */
+    private FeedbackResponse.CategoryPattern categoryPattern(Map<String, Long> map){
+        if (map.isEmpty()) {
+            return FeedbackResponse.CategoryPattern.builder()
+                    .message("카테고리 지출 데이터가 없습니다.")
+                    .build();
+        }
+
+        long total = map.values().stream().mapToLong(v -> v).sum();
+        var top = map.entrySet().stream().max(Map.Entry.comparingByValue()).get();
+
+        double ratio = top.getValue() * 100.0 / total;
+
+        return FeedbackResponse.CategoryPattern.builder()
+                .topCategory(top.getKey())
+                .amount(top.getValue())
+                .ratio(ratio)
+                .message(String.format(
+                        "이번 달에는 %s 지출이 가장 높습니다. 전체 소비의 약 %.1f%%를 차지합니다.",
+                        top.getKey(), ratio
+                ))
+                .build();
+    }
+
+
+    /** 6) 목표 진행률 */
+    private FeedbackResponse.TargetProgress targetProgress(Long userId) {
+        var target = targetService.getCurrentTarget(userId).orElse(null);
 
         long used = expenseFeedbackRepository.getMonthlyTotal(userId, YearMonth.now());
-        double percent = used * 100.0 / target.getTargetAmount();
 
-        return "현재 목표 대비 " + String.format("%.1f", percent) + "% 지출했습니다.";
-    }
-
-    private String fixedVsVariable(Map<String, Long> map){
-        long fixedSum = 0, variableSum = 0;
-
-        for (var entry: map.entrySet()){
-            if (FIXED.contains(entry.getKey())) fixedSum += entry.getValue();
-            else variableSum += entry.getValue();
+        // 목표 없음
+        if (target == null) {
+            return FeedbackResponse.TargetProgress.builder()
+                    .targetAmount(null)
+                    .usedAmount(used)
+                    .ratio(null)
+                    .message("이번 달 목표가 설정되어 있지 않습니다.")
+                    .build();
         }
 
-        if (fixedSum + variableSum == 0) return "지출 데이터 없음";
+        Long targetAmount = target.getTargetAmount();
+        double percent = used * 100.0 / targetAmount;
 
-        double rate = fixedSum * 100.0 / (fixedSum + variableSum);
-        if (rate > 50)
-            return "고정 지출 비율이 높습니다 (" + (int)rate + "%). 소비 유연성이 낮습니다.";
-        return "고정 지출 비율이 적절한 수준입니다.";
+        return FeedbackResponse.TargetProgress.builder()
+                .targetAmount(targetAmount)
+                .usedAmount(used)
+                .ratio(percent)
+                .message(String.format("현재 목표 대비 %.1f%% 지출했습니다.", percent))
+                .build();
     }
 
-    private String categoryConcentration(Map<String, Long> map){
-        if (map.isEmpty()) return "카테고리 데이터 없음";
+    /** 7) 고정 vs 변동 지출 */
+    private FeedbackResponse.FixedVsVariable fixedVsVariable(Map<String, Long> map) {
+        long fixed = 0, variable = 0;
 
-        long total = map.values().stream().mapToLong(Long::longValue).sum();
-        var max = map.entrySet().stream().max(Map.Entry.comparingByValue()).get();
+        for (var e : map.entrySet()) {
+            if (FIXED.contains(e.getKey())) fixed += e.getValue();
+            else variable += e.getValue();
+        }
 
-        double percent = max.getValue() * 100.0 / total;
+        double total = fixed + variable;
+        if (total == 0) {
+            return FeedbackResponse.FixedVsVariable.builder()
+                    .message("지출 데이터 없음.")
+                    .build();
+        }
 
-        if (percent > 40)
-            return max.getKey() + " 카테고리가 " + String.format("%.1f", percent) + "%로 과도하게 높습니다.";
-        return max.getKey() + " 지출이 가장 많지만 집중도는 정상 범위입니다.";
+        return FeedbackResponse.FixedVsVariable.builder()
+                .fixedTotal(fixed)
+                .variableTotal(variable)
+                .fixedRatio(fixed * 100.0 / total)
+                .variableRatio(variable * 100.0 / total)
+                .message("고정 지출과 변동 지출 비율을 계산했습니다.")
+                .build();
     }
 
-    public String dailyAverageTrend(List<DayExpense> daily, Double lastAvg) {
-        if (daily.isEmpty()) return "일별 지출 데이터 없음.";
+    /** 8) 하루 평균 */
+    private FeedbackResponse.DailyAverageTrend dailyAverageTrend(List<DayExpense> daily, Double lastAvg) {
+        if (daily.isEmpty()) {
+            return FeedbackResponse.DailyAverageTrend.builder()
+                    .message("일별 지출 데이터가 부족합니다.")
+                    .build();
+        }
 
-        long total = daily.stream().mapToLong(DayExpense::getTotal).sum();
-        double avg = total / (double) daily.size();
+        double avg = daily.stream().mapToLong(DayExpense::getTotal).average().orElse(0);
 
-        if (lastAvg == null)
-            return "지난달 데이터가 없어 비교 불가.";
+        if (lastAvg == null) {
+            return FeedbackResponse.DailyAverageTrend.builder()
+                    .currentAvg(avg)
+                    .message("지난달 평균 데이터가 없어 비교할 수 없습니다.")
+                    .build();
+        }
 
         double diff = avg - lastAvg;
-        if (diff > 0) return "일평균 지출이 지난달보다 " + (int) diff + "원 증가했습니다.";
-        return "일평균 지출이 지난달보다 감소했습니다.";
+
+        return FeedbackResponse.DailyAverageTrend.builder()
+                .currentAvg(avg)
+                .lastMonthAvg(lastAvg)
+                .diff(diff)
+                .message(String.format("하루 평균 지출이 지난달보다 %.1f원 %s했습니다.",
+                        Math.abs(diff), diff > 0 ? "증가" : "감소"))
+                .build();
     }
 
-    public String spike(List<DayExpense> daily) {
-        if (daily.isEmpty()) return "스파이크 분석 불가.";
-
-        var max = daily.stream().max(Comparator.comparing(DayExpense::getTotal)).get();
-        return max.getDate() + " 지출(" + max.getTotal() + "원)이 가장 높습니다.";
-    }
-
-    public String overSpendSequence(List<DayExpense> list) {
-        if (list.size() < 3) return "데이터 부족.";
-
-        int streak = 0;
-        for (int i = 1; i < list.size(); i++) {
-            if (list.get(i).getTotal() > list.get(i - 1).getTotal())
-                streak++;
-            else
-                streak = 0;
+    /** 9) 스파이크 탐지 */
+    private FeedbackResponse.SpikeDetection spikeDetection(List<DayExpense> daily) {
+        if (daily.isEmpty()) {
+            return FeedbackResponse.SpikeDetection.builder()
+                    .message("스파이크 분석 불가.")
+                    .build();
         }
 
-        if (streak >= 4)
-            return "최근 " + (streak+1) + "일 연속 지출 증가! 과소비 위험!";
-        if (streak >= 2)
-            return "최근 " + (streak+1) + "일 연속 지출 증가 중입니다.";
-        return "지출 증가 패턴 없음.";
+        var max = daily.stream().max(Comparator.comparing(DayExpense::getTotal)).get();
+
+        return FeedbackResponse.SpikeDetection.builder()
+                .date(max.getDate().toString())
+                .amount(max.getTotal())
+                .message(String.format(
+                        "%s에 %,d원을 사용해 가장 많은 지출이 발생했습니다.",
+                        formatDate(max.getDate()),
+                        max.getTotal()))
+                .build();
     }
+
+    /** 10) 연속 증가 탐지 */
+    private FeedbackResponse.OverSpendSequence overSpendSequence(List<DayExpense> daily) {
+        if (daily.size() < 3) {
+            return FeedbackResponse.OverSpendSequence.builder()
+                    .message("데이터 부족.")
+                    .build();
+        }
+
+        int streak = 0;
+        for (int i = 1; i < daily.size(); i++) {
+            if (daily.get(i).getTotal() > daily.get(i - 1).getTotal()) streak++;
+            else streak = 0;
+        }
+
+        int days = streak + 1;
+
+        return FeedbackResponse.OverSpendSequence.builder()
+                .streak(days)
+                .message(days >= 4
+                        ? "최근 " + days + "일 연속 지출 증가! 과소비 위험!"
+                        : "최근 " + days + "일 연속 지출 증가 중입니다.")
+                .build();
+    }
+
+    // 전 주 대비 비교
+    private String weeklyCompare(Long userId) {
+
+        List<DayExpense> daily = expenseFeedbackRepository.getDailyTotals(userId);
+        if (daily.size() < 14) return "주간 비교를 위한 데이터가 부족합니다.";
+
+        LocalDate today = LocalDate.now();
+        LocalDate weekAgo = today.minusDays(7);
+        LocalDate twoWeeksAgo = today.minusDays(14);
+
+        long thisWeek = daily.stream()
+                .filter(d -> !d.getDate().isBefore(weekAgo))
+                .mapToLong(DayExpense::getTotal)
+                .sum();
+
+        long lastWeek = daily.stream()
+                .filter(d -> d.getDate().isBefore(weekAgo) && !d.getDate().isBefore(twoWeeksAgo))
+                .mapToLong(DayExpense::getTotal)
+                .sum();
+
+        if (lastWeek == 0) return "지난주 데이터가 부족합니다.";
+
+        double rate = (thisWeek - lastWeek) * 100.0 / lastWeek;
+
+        if (rate > 0)
+            return String.format("지난주보다 %.1f%% 증가했습니다.", rate);
+        else
+            return String.format("지난주보다 %.1f%% 감소했습니다.", Math.abs(rate));
+    }
+
+    // 최근 7일 증가/감소 트렌드
+    private String last7DaysTrend(Long userId) {
+        List<DayExpense> daily = expenseFeedbackRepository.getDailyTotals(userId);
+        if (daily.size() < 14) return "최근 7일 분석을 위한 데이터가 부족합니다.";
+
+        LocalDate today = LocalDate.now();
+        LocalDate weekAgo = today.minusDays(7);
+        LocalDate twoWeeksAgo = today.minusDays(14);
+
+        double avgRecent = daily.stream()
+                .filter(d -> !d.getDate().isBefore(weekAgo))
+                .mapToLong(DayExpense::getTotal)
+                .average().orElse(0);
+
+        double avgPrevious = daily.stream()
+                .filter(d -> d.getDate().isBefore(weekAgo) && !d.getDate().isBefore(twoWeeksAgo))
+                .mapToLong(DayExpense::getTotal)
+                .average().orElse(0);
+
+        if (avgPrevious == 0) return "지난 기간 데이터가 부족합니다.";
+
+        double diff = avgRecent - avgPrevious;
+
+        if (diff > 0)
+            return String.format("최근 7일간 평균 지출이 이전 대비 %,d원 증가했습니다.",
+                    (long) diff);
+        else
+            return String.format("최근 7일간 평균 지출이 이전 대비 %,d원 감소했습니다.",
+                    (long) Math.abs(diff));
+    }
+
+
+    private String formatMoney(Long amount) {
+        if (amount == null) return "0원";
+        return String.format("%,d원", amount);
+    }
+
+    private String formatDate(LocalDate date) {
+        if (date == null) return "";
+        return String.format("%d월 %d일", date.getMonthValue(), date.getDayOfMonth());
+    }
+
+
 }
