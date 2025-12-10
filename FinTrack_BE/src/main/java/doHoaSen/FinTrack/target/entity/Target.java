@@ -21,4 +21,5 @@ public class Target {
 
     private Integer year;      // 목표 년도
     private Integer month;     // 목표 월
+
 }

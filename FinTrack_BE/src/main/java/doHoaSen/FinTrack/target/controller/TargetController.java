@@ -18,7 +18,7 @@ public class TargetController {
 
     @GetMapping
     public ApiResponse<TargetResponse> getTarget(@AuthenticationPrincipal CustomUserDetails user) {
-        Target target = targetService.getCurrentTarget(user.getId());
+        Target target = targetService.getCurrentTarget(user.getId()).orElse(null);
         if (target == null) {
             return ApiResponse.success("이번 달 목표가 설정되어 있지 않습니다.", null);
         }
