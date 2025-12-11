@@ -1,9 +1,11 @@
 package doHoaSen.FinTrack.target.dto;
 
 import lombok.Getter;
-import lombok.Setter;
+import jakarta.validation.constraints.NotNull;
 
-@Getter @Setter
+@Getter
 public class TargetRequest {
-    private Long targetAmount;
+
+    @NotNull(message = "목표 금액은 필수입니다.")
+    private Long amount;
 }
