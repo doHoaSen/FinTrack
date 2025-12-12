@@ -19,6 +19,9 @@ public class FeedbackResponse {
     private SpikeDetection spikeDetection;
     private OverSpendSequence overSpendSequence;
 
+    private WeekCompare weekCompare;
+    private WeeklyAverageTrend weeklyAverageTrend;
+
     @Getter @Builder
     public static class MonthlyTrend {
         private String status;
@@ -93,6 +96,22 @@ public class FeedbackResponse {
     @Getter @Builder
     public static class OverSpendSequence {
         private Integer streak;
+        private String message;
+    }
+
+    @Getter @Builder
+    public static class WeekCompare{
+        private Long thisWeek;
+        private Long lastWeek;
+        private Double diffPercent;
+        private String message;
+    }
+
+    @Getter @Builder
+    public static class WeeklyAverageTrend{
+        private Double thisWeekAvg;
+        private Double lastWeekAvg;
+        private Double diffPercent;
         private String message;
     }
 }
