@@ -42,6 +42,9 @@ public class ExpenseFeedbackService {
         builder.spikeDetection(spikeDetection(daily));
         builder.overSpendSequence(overSpendSequence(daily));
 
+        builder.weekCompare(weekCompare(userId));
+        builder.weeklyAverageTrend(weeklyAverageTrend(userId));
+
         return builder.build();
     }
 
@@ -288,65 +291,58 @@ public class ExpenseFeedbackService {
                 .build();
     }
 
-    // 전 주 대비 비교
-    private String weeklyCompare(Long userId) {
+    /** 11) 주간 총지출 비교 기능 */
+    private FeedbackResponse.WeekCompare weekCompare(Long userId) {
+        long thisWeek = expenseFeedbackRepository.getThisWeekTotal(userId);
+        long lastWeek = expenseFeedbackRepository.getLastWeekTotal(userId);
 
-        List<DayExpense> daily = expenseFeedbackRepository.getDailyTotals(userId);
-        if (daily.size() < 14) return "주간 비교를 위한 데이터가 부족합니다.";
+        if (lastWeek == 0)
+            return FeedbackResponse.WeekCompare.builder()
+                    .thisWeek(thisWeek)
+                    .lastWeek(lastWeek)
+                    .message("지난주 데이터가 없어 비교가 어렵습니다.")
+                    .build();
 
-        LocalDate today = LocalDate.now();
-        LocalDate weekAgo = today.minusDays(7);
-        LocalDate twoWeeksAgo = today.minusDays(14);
+        double diff = (thisWeek - lastWeek) * 100.0 / lastWeek;
 
-        long thisWeek = daily.stream()
-                .filter(d -> !d.getDate().isBefore(weekAgo))
-                .mapToLong(DayExpense::getTotal)
-                .sum();
-
-        long lastWeek = daily.stream()
-                .filter(d -> d.getDate().isBefore(weekAgo) && !d.getDate().isBefore(twoWeeksAgo))
-                .mapToLong(DayExpense::getTotal)
-                .sum();
-
-        if (lastWeek == 0) return "지난주 데이터가 부족합니다.";
-
-        double rate = (thisWeek - lastWeek) * 100.0 / lastWeek;
-
-        if (rate > 0)
-            return String.format("지난주보다 %.1f%% 증가했습니다.", rate);
-        else
-            return String.format("지난주보다 %.1f%% 감소했습니다.", Math.abs(rate));
+        return FeedbackResponse.WeekCompare.builder()
+                .thisWeek(thisWeek)
+                .lastWeek(lastWeek)
+                .diffPercent(diff)
+                .message(String.format(
+                        "지난주 대비 총 지출 금액이 %.1f%% %s했습니다.",
+                        Math.abs(diff),
+                        diff > 0 ? "증가" : "감소"
+                ))
+                .build();
     }
 
-    // 최근 7일 증가/감소 트렌드
-    private String last7DaysTrend(Long userId) {
-        List<DayExpense> daily = expenseFeedbackRepository.getDailyTotals(userId);
-        if (daily.size() < 14) return "최근 7일 분석을 위한 데이터가 부족합니다.";
+    /** 12) 주간 일평균 소비 비교 기능 */
+    private FeedbackResponse.WeeklyAverageTrend weeklyAverageTrend(Long userId) {
+        long thisWeek = expenseFeedbackRepository.getThisWeekTotal(userId);
+        long lastWeek = expenseFeedbackRepository.getLastWeekTotal(userId);
 
-        LocalDate today = LocalDate.now();
-        LocalDate weekAgo = today.minusDays(7);
-        LocalDate twoWeeksAgo = today.minusDays(14);
+        double thisAvg = thisWeek / 7.0;
+        double lastAvg = lastWeek / 7.0;
 
-        double avgRecent = daily.stream()
-                .filter(d -> !d.getDate().isBefore(weekAgo))
-                .mapToLong(DayExpense::getTotal)
-                .average().orElse(0);
+        if (lastWeek == 0)
+            return FeedbackResponse.WeeklyAverageTrend.builder()
+                    .thisWeekAvg(thisAvg)
+                    .message("지난주 데이터 부족해 비교할 수 없습니다.")
+                    .build();
 
-        double avgPrevious = daily.stream()
-                .filter(d -> d.getDate().isBefore(weekAgo) && !d.getDate().isBefore(twoWeeksAgo))
-                .mapToLong(DayExpense::getTotal)
-                .average().orElse(0);
+        double diff = (thisAvg - lastAvg) * 100.0 / lastAvg;
 
-        if (avgPrevious == 0) return "지난 기간 데이터가 부족합니다.";
-
-        double diff = avgRecent - avgPrevious;
-
-        if (diff > 0)
-            return String.format("최근 7일간 평균 지출이 이전 대비 %,d원 증가했습니다.",
-                    (long) diff);
-        else
-            return String.format("최근 7일간 평균 지출이 이전 대비 %,d원 감소했습니다.",
-                    (long) Math.abs(diff));
+        return FeedbackResponse.WeeklyAverageTrend.builder()
+                .thisWeekAvg(thisAvg)
+                .lastWeekAvg(lastAvg)
+                .diffPercent(diff)
+                .message(String.format(
+                        "이번 주 하루 평균 소비는 지난주보다 %.1f%% %s했습니다.",
+                        Math.abs(diff),
+                        diff > 0 ? "증가" : "감소"
+                ))
+                .build();
     }
 
 

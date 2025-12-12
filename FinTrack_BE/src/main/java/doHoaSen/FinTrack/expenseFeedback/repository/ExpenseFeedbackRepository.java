@@ -37,7 +37,7 @@ public class ExpenseFeedbackRepository {
         return map;
     }
 
-    /* 날짜별 지출*/
+    /* 날짜별 총액*/
     public List<DayExpense> getDailyTotals(Long userId) {
         String sql = """
             SELECT DATE(date_time), SUM(amount)
@@ -65,22 +65,21 @@ public class ExpenseFeedbackRepository {
     }
 
 
-    /* 이번달 총액*/
+    /* 특정 월 총액*/
     public Long getMonthlyTotal(Long userId, YearMonth month){
         String sql = """
-            SELECT SUM(amount)
+            SELECT COALESCE(SUM(amount),0)
             FROM expense
             WHERE user_id = :userId
-              AND DATE_TRUNC('month', date_time)=DATE_TRUNC('month', CAST(:target AS timestamp)) 
+              AND date_trunc('month', date_time) = date_trunc('month', :target)
         """;
 
-        Object result = em.createNativeQuery(sql)
+        return ((Number) em.createNativeQuery(sql)
                 .setParameter("userId", userId)
                 .setParameter("target", month.atDay(1))
-                .getSingleResult();
-
-        return result == null ? 0L : ((Number)result).longValue();
+                .getSingleResult()).longValue();
     }
+
 
     /* 지난달 평균*/
     public Double getLastMonthDailyAverage(Long userId){
@@ -101,5 +100,35 @@ public class ExpenseFeedbackRepository {
                 .getSingleResult();
 
         return result == null ? null : ((Number) result).doubleValue();
+    }
+
+    /* 이번 주(월~일) 총액 */
+    public Long getThisWeekTotal(Long userId) {
+        String sql = """
+            SELECT COALESCE(SUM(amount),0)
+            FROM expense
+            WHERE user_id = :userId
+              AND date_time >= DATE_TRUNC('week', now() AT TIME ZONE 'Asia/Seoul')
+              AND date_time <  DATE_TRUNC('week', now() AT TIME ZONE 'Asia/Seoul') + INTERVAL '7 days'
+        """;
+
+        return ((Number) em.createNativeQuery(sql)
+                .setParameter("userId", userId)
+                .getSingleResult()).longValue();
+    }
+
+    /* 지난 주(월~일) 총액 */
+    public Long getLastWeekTotal(Long userId) {
+        String sql = """
+            SELECT COALESCE(SUM(amount),0)
+            FROM expense
+            WHERE user_id = :userId
+              AND date_time >= DATE_TRUNC('week', now() AT TIME ZONE 'Asia/Seoul') - INTERVAL '7 days'
+              AND date_time <  DATE_TRUNC('week', now() AT TIME ZONE 'Asia/Seoul')
+        """;
+
+        return ((Number) em.createNativeQuery(sql)
+                .setParameter("userId", userId)
+                .getSingleResult()).longValue();
     }
 }
