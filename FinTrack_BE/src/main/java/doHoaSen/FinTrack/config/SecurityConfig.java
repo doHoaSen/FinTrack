@@ -42,7 +42,11 @@ public class SecurityConfig {
                 .authorizeHttpRequests(auth -> auth
                         .requestMatchers(
                                 "/api/auth/**", // 로그인, 로그아웃
-                                "/api/user/**" // 회원가입, 중복검사 등
+                                "/api/user/**", // 회원가입, 중복검사 등
+                                // swagger
+                                "/swagger-ui/**",
+                                "/v3/api-docs/**",
+                                "/v3/api-docs.yaml"
                         ).permitAll()
                         .anyRequest().authenticated()
         )
