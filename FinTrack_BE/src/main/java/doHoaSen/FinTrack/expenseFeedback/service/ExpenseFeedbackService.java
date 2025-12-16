@@ -10,6 +10,7 @@ import doHoaSen.FinTrack.target.service.TargetService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 
+import java.time.DayOfWeek;
 import java.time.LocalDate;
 import java.time.YearMonth;
 import java.util.*;
@@ -293,8 +294,12 @@ public class ExpenseFeedbackService {
 
     /** 11) 주간 총지출 비교 기능 */
     private FeedbackResponse.WeekCompare weekCompare(Long userId) {
-        long thisWeek = expenseFeedbackRepository.getThisWeekTotal(userId);
-        long lastWeek = expenseFeedbackRepository.getLastWeekTotal(userId);
+
+        LocalDate thisWeekStart = getThisWeekStart();
+        LocalDate lastWeekStart = getLastWeekStart();
+
+        long thisWeek = expenseFeedbackRepository.getThisWeekTotal(userId, thisWeekStart);
+        long lastWeek = expenseFeedbackRepository.getLastWeekTotal(userId, lastWeekStart);
 
         if (lastWeek == 0)
             return FeedbackResponse.WeekCompare.builder()
@@ -317,10 +322,17 @@ public class ExpenseFeedbackService {
                 .build();
     }
 
+
     /** 12) 주간 일평균 소비 비교 기능 */
     private FeedbackResponse.WeeklyAverageTrend weeklyAverageTrend(Long userId) {
-        long thisWeek = expenseFeedbackRepository.getThisWeekTotal(userId);
-        long lastWeek = expenseFeedbackRepository.getLastWeekTotal(userId);
+
+        LocalDate weekStart = LocalDate.now().with(DayOfWeek.MONDAY);
+        long thisWeek = expenseFeedbackRepository.getThisWeekTotal(userId, weekStart);
+
+        LocalDate lastWeekStart = getLastWeekStart();
+
+
+        long lastWeek = expenseFeedbackRepository.getLastWeekTotal(userId, lastWeekStart);
 
         double thisAvg = thisWeek / 7.0;
         double lastAvg = lastWeek / 7.0;
@@ -343,6 +355,18 @@ public class ExpenseFeedbackService {
                         diff > 0 ? "증가" : "감소"
                 ))
                 .build();
+    }
+
+
+    /** 📌 이번 주 월요일 */
+    private LocalDate getThisWeekStart() {
+        LocalDate today = LocalDate.now();
+        return today.minusDays(today.getDayOfWeek().getValue() - 1);   // 월=1
+    }
+
+    /** 📌 지난 주 월요일 */
+    private LocalDate getLastWeekStart() {
+        return getThisWeekStart().minusWeeks(1);
     }
 
 
