@@ -2,7 +2,7 @@ import SummarySection from "../components/dashboard/SummarySection";
 import QuickExpenseForm from "../components/dashboard/QuickExpenseForm";
 import GoalHistoryPreview from "../components/dashboard/GoalHistoryPreview";
 import RecentExpenseSection from "../components/dashboard/RecentExpenseSection";
-import { useState } from "react";
+import { useExpenseStore } from "../store/expenseStore";
 
 export type Expense = {
     id: number;
@@ -11,15 +11,9 @@ export type Expense = {
 };
 
 function DashboardPage(){
-    const [expenses, setExpenses] = useState<Expense[]>([]);
-
-    const addExpense = (expense: Expense) => {
-        setExpenses((prev) => [expense, ...prev]);
-    };
-
-    const deleteExpense = (id: number) => {
-        setExpenses((prev) => prev.filter((e) => e.id !== id));
-    };
+    const expenses = useExpenseStore((state) => state.expenses);
+    const deleteExpense = useExpenseStore((state) => state.deleteExpense);
+  
     
     return(
         <div style={{padding: 24}}>
@@ -27,7 +21,7 @@ function DashboardPage(){
             
 
             <SummarySection expenses = {expenses} />
-            <QuickExpenseForm onAddExpense = {addExpense} />
+            <QuickExpenseForm />
             <GoalHistoryPreview />
             <RecentExpenseSection 
                 expenses = {expenses}

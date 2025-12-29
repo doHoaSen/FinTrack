@@ -1,23 +1,25 @@
 import { useState } from "react";
 import type { Expense } from "../../pages/DashboardPage";
+import { useExpenseStore } from "../../store/expenseStore";
 
-type Props = {
-    onAddExpense: (expense: Expense) => void;
-}
 
-function QuickExpenseForm({onAddExpense}: Props){
+
+function QuickExpenseForm(){
+    const addExpense = useExpenseStore((state) => state.addExpense);
     const [amount, setAmount] = useState("");
     const [category, setCategory] = useState("식비");
 
     const handleSubmit = () => {
         if (!amount) return;
-        onAddExpense({
+        
+        addExpense({
             id: Date.now(),
             amount: Number(amount),
             category,
         });
+
         setAmount("");
-    }
+    };
 
     return (
         <section style = {{marginBottom: 24}}>
