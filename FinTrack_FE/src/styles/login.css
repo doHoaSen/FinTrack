@@ -1,0 +1,52 @@
+.login-container {
+  min-height: 100vh;
+  background-color: var(--color-bg);
+  display: flex;
+  justify-content: center;
+  align-items: center;
+}
+
+.login-card {
+  width: 360px;
+}
+
+.login-title {
+  margin-bottom: 8px;
+}
+
+.login-subtitle {
+  color: var(--color-text-muted);
+  margin-bottom: 24px;
+  font-size: 14px;
+}
+
+.login-error {
+  color: var(--color-error);
+  font-size: 13px;
+  margin-top: 8px;
+}
+
+.login-footer {
+  margin-top: 16px;
+  text-align: center;
+  color: var(--color-text-muted);
+  cursor: pointer;
+}
+
+.password-rules {
+  margin-bottom: 5px;
+  font-size: 13px;
+}
+
+.rule {
+  margin-bottom: 4px;
+}
+
+.rule.success {
+  color: var(--color-success);
+}
+
+.rule.error {
+  color: var(--color-error);
+  font-size: 13px;
+}
