@@ -23,7 +23,7 @@ public class UserController {
     }
 
     // 회원가입
-    @PostMapping("/register")
+    @PostMapping("/signup")
     public ResponseEntity<ApiResponse<Void>> register(@Valid @RequestBody UserRegisterRequest request){
         userService.register(request);
         return ResponseEntity.status(201).body(ApiResponse.success("회원가입이 완료되었습니다.", null));
