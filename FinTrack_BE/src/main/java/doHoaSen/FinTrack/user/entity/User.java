@@ -47,4 +47,9 @@ public class User {
         return u;
     }
 
+    @Column(name = "is_deleted", nullable = false)
+    private boolean isDeleted = false;
+
+    private LocalDateTime deletedAt;
+
 }

@@ -1,11 +1,13 @@
 package doHoaSen.FinTrack.user.controller;
 
+import doHoaSen.FinTrack.auth.dto.CustomUserDetails;
 import doHoaSen.FinTrack.global.response.ApiResponse;
 import doHoaSen.FinTrack.user.dto.UserRegisterRequest;
 import doHoaSen.FinTrack.user.service.UserService;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.web.bind.annotation.*;
 
 @RestController
@@ -27,5 +29,12 @@ public class UserController {
     public ResponseEntity<ApiResponse<Void>> register(@Valid @RequestBody UserRegisterRequest request){
         userService.register(request);
         return ResponseEntity.status(201).body(ApiResponse.success("회원가입이 완료되었습니다.", null));
+    }
+
+    // 회원탈퇴
+    @DeleteMapping("/me")
+    public ApiResponse<?> withdraw(@AuthenticationPrincipal CustomUserDetails user){
+        userService.withdraw(user.getId());
+        return ApiResponse.success("회원탈퇴가 완료되었습니다.", null);
     }
 }

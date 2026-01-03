@@ -42,7 +42,8 @@ public class SecurityConfig {
                 .authorizeHttpRequests(auth -> auth
                         .requestMatchers(
                                 "/api/auth/**", // 로그인, 로그아웃
-                                "/api/user/**", // 회원가입, 중복검사 등
+                                "/api/user/signup", // 회원가입, 중복검사 등
+                                "api/user/check-email-duplicate",
                                 // swagger
                                 "/swagger-ui/**",
                                 "/v3/api-docs/**",
