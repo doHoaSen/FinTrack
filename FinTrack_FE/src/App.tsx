@@ -1,23 +1,33 @@
-import {Routes, Route, Navigate} from "react-router-dom";
+import { Routes, Route, Navigate } from "react-router-dom";
 import LoginPage from "./pages/LoginPage";
 import SignupPage from "./pages/SignupPage";
 import DashboardPage from "./pages/DashboardPage";
+import SettingsPage from "./pages/SettingsPage";
+import ProtectedRoute from "./routes/ProtectedRoute";
+import ProtectedLayout from "./routes/ProtectedLayout";
 
 function App() {
- 
-
   return (
     <Routes>
       <Route path="/" element={<Navigate to="/login" />} />
 
       {/* 인증 */}
-      <Route path = "/login" element = {<LoginPage />} />
-      <Route path = "/signup" element = {<SignupPage/>} />
+      <Route path="/login" element={<LoginPage />} />
+      <Route path="/signup" element={<SignupPage />} />
 
-      {/* 메인 */}
-      <Route path = "/dashboard" element = {<DashboardPage />} />
+      {/* 보호 영역 */}
+      <Route
+        element={
+          <ProtectedRoute>
+            <ProtectedLayout />
+          </ProtectedRoute>
+        }
+      >
+        <Route path="/dashboard" element={<DashboardPage />} />
+        <Route path="/settings" element={<SettingsPage />} />
+      </Route>
     </Routes>
-  )
+  );
 }
 
-export default App
+export default App;

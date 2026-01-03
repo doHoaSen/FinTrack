@@ -1,17 +1,17 @@
-import type { Expense } from "../../pages/DashboardPage";
 
 type Props = {
-    expenses: Expense[];
-}
+    total?: number;
+};
 
-function SummarySection({expenses}: Props) {
-    const total = expenses.reduce((sum, e) => sum + e.amount, 0);
+function SummarySection({ total= 0 }: Props) {
 
     return (
         <section style={{ marginBottom: 24 }}>
-            <h2>이번 달 요약</h2>
+            <h2>이번 달 총 소비</h2>
 
-            <p>총 소비: {total.toLocaleString()}원</p>
+            <p style={{ fontSize: 24, fontWeight: 600 }}>
+                 {total.toLocaleString()}원
+            </p>
         </section>
     )
 }
