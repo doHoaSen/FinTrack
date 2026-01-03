@@ -19,8 +19,8 @@ public class AuthService {
 
     public LoginResponse login (LoginRequest request){
         // 이메일 확인
-        User user = userRepository.findByEmail(request.getEmail())
-                .orElseThrow(() -> new IllegalArgumentException("존재하지 않는 이메일입니다."));
+        User user = userRepository.findByEmailAndIsDeletedFalse(request.getEmail())
+                .orElseThrow(() -> new IllegalArgumentException("존재하지 않거나 탈퇴한 계정입니다."));
 
         // 비밀번호 일치 확인
         if (!passwordEncoder.matches(request.getPassword(), user.getPassword())){
@@ -32,7 +32,11 @@ public class AuthService {
         String refreshToken = jwtProvider.generateRefreshToken(user.getEmail());
 
         // 응답 반환
-        return new LoginResponse(user.getName(), user.getEmail(), accessToken, refreshToken);
+        return new LoginResponse(
+                user.getName(),
+                user.getEmail(),
+                accessToken,
+                refreshToken);
 
     }
 }

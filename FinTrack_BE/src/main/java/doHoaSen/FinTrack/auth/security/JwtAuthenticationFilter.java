@@ -40,15 +40,16 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
          String token = authHeader.substring(7);
 
         // JWT 유효성 검사 (만료, 위조, 서명 불일치 등 체크)
-        if (!jwtProvider.validateToken(token)){
-            filterChain.doFilter(request, response);
+        // 인증 실패 시 바로 401 반환하도록 변경
+        if (!jwtProvider.validateToken(token)) {
+            response.setStatus(HttpServletResponse.SC_UNAUTHORIZED);
             return;
         }
 
         String email = jwtProvider.getEmailFromToken(token);
         // 토큰에서 이메일 추출해
         // DB에서 사용자 조회,
-        userRepository.findByEmail(email).ifPresent(user -> {
+        userRepository.findByEmailAndIsDeletedFalse(email).ifPresent(user -> {
             // 인증 객체 생성하여
             CustomUserDetails customUserDetails =
                     new CustomUserDetails(
@@ -85,4 +86,9 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
     }
 
 
+    @Override
+    protected boolean shouldNotFilter(HttpServletRequest request){
+        String path = request.getRequestURI();
+        return path.startsWith("/api/auth") || path.startsWith("api/user");
+    }
 }
