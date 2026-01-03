@@ -1,5 +1,5 @@
 import { useState } from "react";
-import type { Expense } from "../../pages/DashboardPage";
+import type { Expense } from "../../store/expenseStore";
 import { useExpenseStore } from "../../store/expenseStore";
 
 

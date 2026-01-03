@@ -1,4 +1,4 @@
-import type { Expense } from "../../pages/DashboardPage";
+import type { Expense } from "../../store/expenseStore";
 
 type Props = {
     expenses: Expense[];

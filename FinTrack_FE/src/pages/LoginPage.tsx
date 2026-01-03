@@ -27,7 +27,10 @@ function LoginPage() {
 
       const res = await loginApi({ email, password });
 
-      login(res.accessToken, res.user);
+      login(res.accessToken,
+            {name: res.name,
+              email: res.email
+            });
       navigate("/dashboard");
     } catch (e: any) {
       setError(
