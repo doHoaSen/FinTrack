@@ -4,7 +4,7 @@ import java.time.LocalDateTime;
 
 public record ExpenseCreateRequest (
         Long amount,
-        String category,
+        Long categoryId,
         String memo,
-        LocalDateTime dateTime
+        LocalDateTime expenseAt // 사용자가 실제 지출한 시각
 ){}

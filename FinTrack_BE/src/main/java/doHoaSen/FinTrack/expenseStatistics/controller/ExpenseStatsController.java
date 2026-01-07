@@ -4,6 +4,7 @@ import doHoaSen.FinTrack.auth.dto.CustomUserDetails;
 import doHoaSen.FinTrack.expenseStatistics.dto.HourlyStatsDto;
 import doHoaSen.FinTrack.expenseStatistics.dto.MonthlyStatsDto;
 import doHoaSen.FinTrack.expenseStatistics.dto.WeekdayStatsDto;
+import doHoaSen.FinTrack.expenseStatistics.repository.ExpenseQueryRepository;
 import doHoaSen.FinTrack.expenseStatistics.service.ExpenseStatsService;
 import doHoaSen.FinTrack.global.response.ApiResponse;
 import lombok.RequiredArgsConstructor;
@@ -21,6 +22,7 @@ import java.util.List;
 public class ExpenseStatsController {
 
     final ExpenseStatsService expenseStatsService;
+    final ExpenseQueryRepository expenseQueryRepository;
 
     @GetMapping("/monthly")
     public ApiResponse<List<MonthlyStatsDto>> monthly(
@@ -29,7 +31,7 @@ public class ExpenseStatsController {
             ){
         return ApiResponse.success(
                 "월별 소비 통계 조회 성공",
-                expenseStatsService.getMonthlyStats(customUserDetails.getId(), year)
+                expenseQueryRepository.getMonthlyStats(customUserDetails.getId(), year)
         );
     }
 
@@ -39,7 +41,7 @@ public class ExpenseStatsController {
     ){
         return ApiResponse.success(
                 "요일별 소비 통계 조회 성공",
-                expenseStatsService.getWeekdayStats(customUserDetails.getId())
+                expenseQueryRepository.getWeekdayStats(customUserDetails.getId())
         );
     }
 
@@ -49,7 +51,7 @@ public class ExpenseStatsController {
     ) {
         return ApiResponse.success(
                 "시간대별 소비 통계 조회 성공",
-                expenseStatsService.getHourlyStats(user.getId())
+                expenseQueryRepository.getHourlyStats(user.getId())
         );
     }
 }

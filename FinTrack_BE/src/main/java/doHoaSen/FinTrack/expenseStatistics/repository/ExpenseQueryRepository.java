@@ -1,12 +1,5 @@
 package doHoaSen.FinTrack.expenseStatistics.repository;
 
-import com.querydsl.core.types.EntityPath;
-import com.querydsl.core.types.Projections;
-
-import com.querydsl.core.types.dsl.Expressions;
-import com.querydsl.core.types.dsl.NumberExpression;
-import com.querydsl.jpa.impl.JPAQueryFactory;
-import doHoaSen.FinTrack.expense.entity.QExpense;
 import doHoaSen.FinTrack.expenseStatistics.dto.HourlyStatsDto;
 import doHoaSen.FinTrack.expenseStatistics.dto.MonthlyStatsDto;
 import doHoaSen.FinTrack.expenseStatistics.dto.WeekdayStatsDto;
@@ -18,50 +11,37 @@ import org.springframework.stereotype.Repository;
 import java.util.ArrayList;
 import java.util.List;
 
-import static doHoaSen.FinTrack.expense.entity.QExpense.expense;
-
 @Repository
 @RequiredArgsConstructor
 public class ExpenseQueryRepository {
-    private final JPAQueryFactory queryFactory;
 
-    // 월별 통계
-    public List<MonthlyStatsDto> getMonthlyStats(Long userId, int year){
-        return queryFactory.select(Projections.constructor(MonthlyStatsDto.class,
-                expense.dateTime.month(),
-                expense.amount.sum()
-        ))
-                .from(expense)
-                .where(expense.user.id.eq(userId)
-                        .and(expense.dateTime.year().eq(year)))
-                .groupBy(expense.dateTime.month())
-                .orderBy(expense.dateTime.month().asc())
-                .fetch();
-    }
-
-    // 요일별 통계
     @PersistenceContext
-    private EntityManager em;
+    private final EntityManager em;
 
+    /* 요일별 지출 분포 (1=월 ~ 7=일, ISO 기준) */
     public List<WeekdayStatsDto> getWeekdayStats(Long userId) {
 
         String sql = """
-        SELECT 
-            extract(isodow from e.date_time) AS weekday,
-            SUM(e.amount) AS total
-        FROM expense e
-        WHERE e.user_id = :userId
-        GROUP BY extract(isodow from e.date_time)
-        ORDER BY extract(isodow from e.date_time)
-    """;
+            SELECT
+                EXTRACT(ISODOW FROM e.expense_at) AS weekday,
+                COALESCE(SUM(e.amount), 0) AS total
+            FROM expense e
+            JOIN users u ON u.id = e.user_id
+            WHERE u.id = :userId
+              AND u.is_deleted = false
+              AND e.expense_at IS NOT NULL
+            GROUP BY EXTRACT(ISODOW FROM e.expense_at)
+            ORDER BY weekday
+        """;
 
         List<Object[]> rows = em.createNativeQuery(sql)
                 .setParameter("userId", userId)
                 .getResultList();
 
         List<WeekdayStatsDto> result = new ArrayList<>();
-
         for (Object[] row : rows) {
+            if (row[0] == null) continue;
+
             result.add(new WeekdayStatsDto(
                     ((Number) row[0]).intValue(),
                     ((Number) row[1]).longValue()
@@ -71,34 +51,71 @@ public class ExpenseQueryRepository {
         return result;
     }
 
-
-    // 시간대별 통계
+    /* 시간대별 지출 분포 (0~23) */
     public List<HourlyStatsDto> getHourlyStats(Long userId) {
 
         String sql = """
-        SELECT 
-            extract(hour from e.date_time) AS hour,
-            SUM(e.amount) AS total
-        FROM expense e
-        WHERE e.user_id = :userId
-        GROUP BY extract(hour from e.date_time)
-        ORDER BY extract(hour from e.date_time)
-    """;
+            SELECT
+                EXTRACT(HOUR FROM e.expense_at) AS hour,
+                COALESCE(SUM(e.amount), 0) AS total
+            FROM expense e
+            JOIN users u ON u.id = e.user_id
+            WHERE u.id = :userId
+              AND u.is_deleted = false
+              AND e.expense_at IS NOT NULL
+            GROUP BY EXTRACT(HOUR FROM e.expense_at)
+            ORDER BY hour
+        """;
 
         List<Object[]> rows = em.createNativeQuery(sql)
                 .setParameter("userId", userId)
                 .getResultList();
 
         List<HourlyStatsDto> result = new ArrayList<>();
-
         for (Object[] row : rows) {
+            if (row[0] == null) continue;
+
             result.add(new HourlyStatsDto(
-                    ((Number) row[0]).intValue(),   // hour
-                    ((Number) row[1]).longValue()   // total amount
+                    ((Number) row[0]).intValue(),
+                    ((Number) row[1]).longValue()
             ));
         }
 
         return result;
     }
 
+    /* 월별 분포 (차트용) */
+    public List<MonthlyStatsDto> getMonthlyStats(Long userId, int year) {
+
+        String sql = """
+            SELECT
+                EXTRACT(MONTH FROM e.expense_at) AS month,
+                COALESCE(SUM(e.amount), 0) AS total
+            FROM expense e
+            JOIN users u ON u.id = e.user_id
+            WHERE u.id = :userId
+              AND u.is_deleted = false
+              AND e.expense_at IS NOT NULL
+              AND EXTRACT(YEAR FROM e.expense_at) = :year
+            GROUP BY EXTRACT(MONTH FROM e.expense_at)
+            ORDER BY month
+        """;
+
+        List<Object[]> rows = em.createNativeQuery(sql)
+                .setParameter("userId", userId)
+                .setParameter("year", year)
+                .getResultList();
+
+        List<MonthlyStatsDto> result = new ArrayList<>();
+        for (Object[] row : rows) {
+            if (row[0] == null) continue;
+
+            result.add(new MonthlyStatsDto(
+                    ((Number) row[0]).intValue(),
+                    ((Number) row[1]).longValue()
+            ));
+        }
+
+        return result;
+    }
 }

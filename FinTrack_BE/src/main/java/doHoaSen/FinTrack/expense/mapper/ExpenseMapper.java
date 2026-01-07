@@ -10,9 +10,11 @@ public class ExpenseMapper {
         return new ExpenseResponse(
                 expense.getId(),
                 expense.getAmount(),
-                expense.getCategory(),
+                expense.getCategory().getId(),
+                expense.getCategory().getName(),
+                expense.getCategory().getType(),
                 expense.getMemo(),
-                expense.getDateTime()
+                expense.getExpenseAt()
         );
     }
 }
