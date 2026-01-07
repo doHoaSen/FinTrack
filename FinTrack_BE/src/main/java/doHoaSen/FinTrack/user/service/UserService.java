@@ -6,6 +6,7 @@ import doHoaSen.FinTrack.user.repository.UserRepository;
 import lombok.RequiredArgsConstructor;
 import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 
 import java.time.LocalDateTime;
 import java.util.Optional;
@@ -42,7 +43,7 @@ public class UserService {
             restoreUser(oldUser, request);
         } else {
             // 기존 계정 완전 삭제 후 새 계정 생성
-            userRepository.delete(oldUser);
+            hardDeleteUser(oldUser);
             createNewUser(request);
         }
     }
@@ -74,7 +75,7 @@ public class UserService {
 
     /* 이메일 중복 체크 */
     public boolean checkEmailDuplicate(String email){
-        return userRepository.existsByEmail(email);
+        return userRepository.existsByEmailAndIsDeletedFalse(email);
     }
 
     /* 회원 탈퇴 */
@@ -87,4 +88,10 @@ public class UserService {
 
         userRepository.save(user);
     }
+
+    @Transactional
+    public void hardDeleteUser(User user){
+        userRepository.delete(user);
+    }
+
 }

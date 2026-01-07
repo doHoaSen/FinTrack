@@ -2,35 +2,52 @@ package doHoaSen.FinTrack.dashboard.service;
 
 import doHoaSen.FinTrack.dashboard.dto.DashboardResponse;
 import doHoaSen.FinTrack.expenseFeedback.dto.FeedbackResponse;
-import doHoaSen.FinTrack.expenseFeedback.repository.ExpenseFeedbackRepository;
 import doHoaSen.FinTrack.expenseFeedback.service.ExpenseFeedbackService;
 import doHoaSen.FinTrack.expenseStatistics.repository.ExpenseQueryRepository;
+import doHoaSen.FinTrack.expenseStatistics.repository.ExpenseStatsRepository;
 import doHoaSen.FinTrack.target.dto.TargetResponse;
 import doHoaSen.FinTrack.target.service.TargetService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 
 import java.time.YearMonth;
+import java.util.Collections;
 
 @Service
 @RequiredArgsConstructor
 public class DashboardService {
+
+    private final ExpenseStatsRepository expenseStatsRepository;
     private final ExpenseQueryRepository expenseQueryRepository;
     private final ExpenseFeedbackService expenseFeedbackService;
     private final TargetService targetService;
-    private final ExpenseFeedbackRepository expenseFeedbackRepository;
 
-    public DashboardResponse generateDashboard(Long userId){
-        var monthlyStats = expenseQueryRepository.getMonthlyStats(userId, YearMonth.now().getYear());
-        var weekdayStats = expenseQueryRepository.getWeekdayStats(userId);
-        var hourlyStats = expenseQueryRepository.getHourlyStats(userId);
+    public DashboardResponse generateDashboard(Long userId) {
 
+        int year = YearMonth.now().getYear();
+        YearMonth now = YearMonth.now();
+
+        // 차트용 통계 (없으면 빈 리스트)
+        var monthlyStats = safeList(
+                expenseQueryRepository.getMonthlyStats(userId, year)
+        );
+
+        var weekdayStats = safeList(
+                expenseQueryRepository.getWeekdayStats(userId)
+        );
+
+        var hourlyStats = safeList(
+                expenseQueryRepository.getHourlyStats(userId)
+        );
+
+        // 목표 (없어도 정상)
         var optionalTarget = targetService.getCurrentTarget(userId);
-        long usedThisMonth = expenseFeedbackRepository.getMonthlyTotal(userId, YearMonth.now());
-
+        long usedThisMonth = expenseStatsRepository.getMonthlyTotal(userId, now);
         TargetResponse target = TargetResponse.of(optionalTarget, usedThisMonth);
 
+        // 피드백 (내부에서 신규 사용자 방어 완료)
         FeedbackResponse feedback = expenseFeedbackService.generate(userId);
+
         return DashboardResponse.builder()
                 .monthlyStats(monthlyStats)
                 .weekdayStats(weekdayStats)
@@ -38,5 +55,10 @@ public class DashboardService {
                 .target(target)
                 .feedback(feedback)
                 .build();
+    }
+
+    /** null 방어 유틸 */
+    private <T> java.util.List<T> safeList(java.util.List<T> list) {
+        return list == null ? Collections.emptyList() : list;
     }
 }

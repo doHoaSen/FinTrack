@@ -1,7 +1,8 @@
 package doHoaSen.FinTrack.target.controller;
 
 import doHoaSen.FinTrack.auth.dto.CustomUserDetails;
-import doHoaSen.FinTrack.expenseFeedback.repository.ExpenseFeedbackRepository;
+import doHoaSen.FinTrack.expenseStatistics.repository.ExpenseQueryRepository;
+import doHoaSen.FinTrack.expenseStatistics.repository.ExpenseStatsRepository;
 import doHoaSen.FinTrack.global.response.ApiResponse;
 import doHoaSen.FinTrack.target.dto.TargetRequest;
 import doHoaSen.FinTrack.target.dto.TargetResponse;
@@ -20,7 +21,8 @@ import java.time.YearMonth;
 public class TargetController {
 
     private final TargetService targetService;
-    private final ExpenseFeedbackRepository expenseFeedbackRepository;
+    private final ExpenseQueryRepository expenseQueryRepository;
+    private final ExpenseStatsRepository expenseStatsRepository;
 
     /** 목표 생성 또는 수정 */
     @PostMapping
@@ -29,7 +31,7 @@ public class TargetController {
             @Valid @RequestBody TargetRequest request
     ) {
         Target target = targetService.upsertTarget(user.getId(), request.getAmount());
-        Long used = expenseFeedbackRepository.getMonthlyTotal(user.getId(), YearMonth.now());
+        Long used = expenseStatsRepository.getMonthlyTotal(user.getId(), YearMonth.now());
 
         return ApiResponse.success("목표 설정 완료", TargetResponse.of(target, used));
     }
@@ -40,7 +42,7 @@ public class TargetController {
             @AuthenticationPrincipal CustomUserDetails user
     ) {
         Target target = targetService.getCurrentTarget(user.getId()).orElse(null);
-        Long used = expenseFeedbackRepository.getMonthlyTotal(user.getId(), YearMonth.now());
+        Long used = expenseStatsRepository.getMonthlyTotal(user.getId(), YearMonth.now());
 
         return ApiResponse.success("목표 조회 성공", TargetResponse.of(target, used));
     }
@@ -52,7 +54,7 @@ public class TargetController {
             @Valid @RequestBody TargetRequest request
     ) {
         Target target = targetService.updateTarget(user.getId(), request.getAmount());
-        Long used = expenseFeedbackRepository.getMonthlyTotal(user.getId(), YearMonth.now());
+        Long used = expenseStatsRepository.getMonthlyTotal(user.getId(), YearMonth.now());
 
         return ApiResponse.success("목표 수정 완료", TargetResponse.of(target, used));
     }

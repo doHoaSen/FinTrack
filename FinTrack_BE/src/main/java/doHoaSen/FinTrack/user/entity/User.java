@@ -1,10 +1,13 @@
 package doHoaSen.FinTrack.user.entity;
 
+import doHoaSen.FinTrack.expense.entity.Expense;
 import jakarta.persistence.*;
 import lombok.*;
 import org.hibernate.annotations.CreationTimestamp;
+import org.hibernate.annotations.UpdateTimestamp;
 
 import java.time.LocalDateTime;
+import java.util.List;
 
 @Entity
 @Getter @Setter
@@ -27,19 +30,13 @@ public class User {
     private String password;
 
 
+    @CreationTimestamp
+    @Column(updatable = false)
     private LocalDateTime createdAt;
+
+    @UpdateTimestamp
     private LocalDateTime updatedAt;
 
-    @PrePersist
-    public void prePersist(){
-        this.createdAt = LocalDateTime.now();
-        this.updatedAt = LocalDateTime.now();
-    }
-
-    @PreUpdate
-    public void preUpdate(){
-        this.updatedAt = LocalDateTime.now();
-    }
 
     public static User fake(Long id) {
         User u = new User();
@@ -52,4 +49,6 @@ public class User {
 
     private LocalDateTime deletedAt;
 
+    @OneToMany(mappedBy = "user", cascade = CascadeType.REMOVE)
+    private List<Expense> expenses;
 }
