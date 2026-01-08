@@ -8,6 +8,16 @@ export type ExpenseCreatePayload = {
     expenseAt: string;
 };
 
+export type Expense = {
+  id: number;
+  amount: number;
+  categoryId: number;
+  categoryName: string;
+  categoryType: "FIXED" | "VARIABLE";
+  expenseAt: string;
+  memo?: string;
+};
+
 
 type ExpenseStore = {
   isLoading: boolean;
