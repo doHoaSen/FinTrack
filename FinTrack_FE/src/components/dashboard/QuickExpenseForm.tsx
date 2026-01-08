@@ -12,15 +12,42 @@ import {
   DialogTitle,
   DialogContent,
 } from "@mui/material";
+import { updateExpenseApi } from "../../features/expense/api";
 
-function QuickExpenseForm() {
+type Props = {
+  mode?: "create" | "edit";
+  initialExpense?: {
+    id: number;
+    amount: number;
+    categoryId: number;
+    expenseAt: string;
+    memo?: string;
+  };
+  onClose?: () => void;
+  onSuccess?: (updated: any) => void;
+}
+
+
+function QuickExpenseForm({
+  mode = "create",
+  initialExpense,
+  onClose,
+  onSuccess
+}: Props) {
+  const isEdit = mode === "edit";
   const addExpense = useExpenseStore((s) => s.addExpense);
   const { categories, fetchCategories, addCategory } = useCategoryStore();
 
-  const [amount, setAmount] = useState("");
-  const [categoryId, setCategoryId] = useState<number | null>(null);
-  const [dateTime, setDateTime] = useState(dayjs());
-  const [memo, setMemo] = useState("");
+  const [amount, setAmount] = useState(
+    initialExpense?.amount?.toString() ?? ""
+  );
+  const [categoryId, setCategoryId] = useState<number | null>(
+    initialExpense?.categoryId ?? null
+  );
+  const [dateTime, setDateTime] = useState(
+    initialExpense ? dayjs(initialExpense.expenseAt) : dayjs()
+  );
+  const [memo, setMemo] = useState(initialExpense?.memo ?? "");
 
   const [open, setOpen] = useState(false);
   const [newName, setNewName] = useState("");
@@ -33,27 +60,48 @@ function QuickExpenseForm() {
   const handleSubmit = async () => {
     if (!amount || !categoryId) return;
 
-    await addExpense({
-      amount: Number(amount),
-      categoryId,
-      memo,
-      expenseAt: dateTime.toISOString(),
-    });
+    if (isEdit && initialExpense) {
+      await updateExpenseApi(initialExpense.id, {
+        amount: Number(amount),
+        categoryId,
+        memo,
+        expenseAt: dateTime.toISOString(),
+      });
 
-    setAmount("");
-    setMemo("");
+      onSuccess?.({
+        ...initialExpense,
+        amount: Number(amount),
+        categoryId,
+        memo,
+        expenseAt: dateTime.toISOString(),
+      });
+    } else {
+      await addExpense({
+        amount: Number(amount),
+        categoryId,
+        memo,
+        expenseAt: dateTime.toISOString(),
+      });
+
+      setAmount("");
+      setMemo("");
+      setCategoryId(null);
+    }
+
+    onClose?.();
   };
 
   const handleAddCategory = async () => {
+    if (!newName) return;
     await addCategory({ name: newName, type: newType });
     setOpen(false);
     setNewName("");
   };
 
-  return (
-    <Box sx={{ p: 2, borderRadius: 2, bgcolor: "#fafafa" }}>
+  const content = (
+    <Box sx={{ p: 2 }}>
       <Typography fontWeight={600} mb={2}>
-        빠른 지출 등록
+        {isEdit ? "지출 수정" : "빠른 지출 등록"}
       </Typography>
 
       <TextField
@@ -103,7 +151,7 @@ function QuickExpenseForm() {
       />
 
       <Button fullWidth variant="contained" onClick={handleSubmit}>
-        등록하기
+        {isEdit ? "수정 완료" : "등록하기"}
       </Button>
 
       {/* 카테고리 추가 다이얼로그 */}
@@ -134,6 +182,22 @@ function QuickExpenseForm() {
           </Button>
         </DialogContent>
       </Dialog>
+    </Box>
+  );
+
+  // ✨ edit 모드면 Dialog로 감싸기
+  if (isEdit) {
+    return (
+      <Dialog open onClose={onClose} maxWidth="sm" fullWidth>
+        <DialogContent>{content}</DialogContent>
+      </Dialog>
+    );
+  }
+
+  // create 모드는 기존처럼 바로 렌더
+  return (
+    <Box sx={{ borderRadius: 2, bgcolor: "#fafafa" }}>
+      {content}
     </Box>
   );
 }
