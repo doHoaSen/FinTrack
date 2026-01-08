@@ -33,6 +33,17 @@ public class ExpenseController {
         );
     }
 
+    /*최근 지출 조회*/
+    @GetMapping("/recent")
+    public ApiResponse<List<ExpenseResponse>> getRecentExpenses(
+            @AuthenticationPrincipal CustomUserDetails user
+    ) {
+        return ApiResponse.success(
+                "최근 지출 조회 성공",
+                expenseService.getRecentExpenses(user.getId())
+        );
+    }
+
     /*월별 지출 조회*/
     @GetMapping
     public ResponseEntity<ApiResponse<List<ExpenseResponse>>> getMonthlyExpenses(
