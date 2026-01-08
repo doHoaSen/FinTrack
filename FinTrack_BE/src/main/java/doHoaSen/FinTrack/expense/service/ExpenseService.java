@@ -14,6 +14,7 @@ import doHoaSen.FinTrack.global.exception.NotFoundException;
 import doHoaSen.FinTrack.user.entity.User;
 import doHoaSen.FinTrack.user.repository.UserRepository;
 import lombok.RequiredArgsConstructor;
+import org.springframework.data.domain.PageRequest;
 import org.springframework.stereotype.Service;
 
 import java.time.LocalDate;
@@ -62,6 +63,14 @@ public class ExpenseService {
         return expense;
     }
 
+    // 최근 지출 조회
+    public List<ExpenseResponse> getRecentExpenses(Long userId) {
+        return expenseRepository.findTop10ByUserIdOrderByExpenseAtDesc(userId)
+                .stream()
+                .map(ExpenseMapper::toResponse)
+                .toList();
+    }
+
     // 지출 수정
     public void updateExpense(Long userId, Long expenseId, ExpenseUpdateRequest request){
         Expense expense = getUserExpense(userId, expenseId);
@@ -81,7 +90,7 @@ public class ExpenseService {
         }
 
         if (request.expenseAt() != null) {
-            expense.setExpenseAt(request.expenseAt()); // ✅ 단일 필드 수정
+            expense.setExpenseAt(request.expenseAt());
         }
     }
 
