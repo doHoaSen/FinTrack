@@ -10,4 +10,8 @@ public interface CategoryRepository extends JpaRepository<Category, Long> {
     List<Category> findByUserIsNullOrUserOrderByIsDefaultDescIdAsc(User user);
 
     boolean existsByNameAndUserIsNullOrUser(String name, User user);
+
+    boolean existsByNameAndUser(String name, User user);
+    boolean existsByNameAndUserIsNull(String name);
+
 }

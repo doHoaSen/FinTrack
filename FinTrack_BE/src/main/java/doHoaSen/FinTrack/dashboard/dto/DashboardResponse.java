@@ -12,6 +12,8 @@ import java.util.List;
 
 @Getter @Builder
 public class DashboardResponse {
+    private int joinedYear; // 가입 연도 (추가)
+
     // 통계 API 결과''
     private List<MonthlyStatsDto> monthlyStats;
     private List<WeekdayStatsDto> weekdayStats;

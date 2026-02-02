@@ -1,9 +1,11 @@
 package doHoaSen.FinTrack.expense.controller;
 
 import doHoaSen.FinTrack.auth.dto.CustomUserDetails;
+import doHoaSen.FinTrack.category.entity.ExpenseType;
 import doHoaSen.FinTrack.expense.dto.ExpenseCreateRequest;
 import doHoaSen.FinTrack.expense.dto.ExpenseResponse;
 import doHoaSen.FinTrack.expense.dto.ExpenseUpdateRequest;
+import doHoaSen.FinTrack.expense.dto.PageResponse;
 import doHoaSen.FinTrack.expense.service.ExpenseService;
 import doHoaSen.FinTrack.global.response.ApiResponse;
 import lombok.RequiredArgsConstructor;
@@ -46,32 +48,44 @@ public class ExpenseController {
 
     /*월별 지출 조회*/
     @GetMapping
-    public ResponseEntity<ApiResponse<List<ExpenseResponse>>> getMonthlyExpenses(
+    public ApiResponse<PageResponse<ExpenseResponse>> getMonthlyExpenses(
             @AuthenticationPrincipal CustomUserDetails user,
             @RequestParam int year,
-            @RequestParam int month
-    ){
-        List<ExpenseResponse> expenses = expenseService.getMonthlyExpenses(user.getId(), year, month);
-
-        System.out.println("principal=" + user);
-        return ResponseEntity.ok(
-                ApiResponse.success("해당 월 목록 조회 성공", expenses)
+            @RequestParam int month,
+            @RequestParam(defaultValue = "0") int page,
+            @RequestParam(defaultValue = "20") int size,
+            @RequestParam(required = false) Long categoryId,
+            @RequestParam(required = false) ExpenseType type
+    ) {
+        return ApiResponse.success(
+                "지출 목록 조회 성공",
+                expenseService.getMonthlyExpenses(
+                        user.getId(),
+                        year,
+                        month,
+                        page,
+                        size,
+                        categoryId,
+                        type
+                )
         );
     }
 
     /*지출 수정*/
     @PatchMapping("/{expenseId}")
-    public ResponseEntity<ApiResponse<Void>> updateExpense(
+    public ResponseEntity<ApiResponse<ExpenseResponse>> updateExpense(
             @AuthenticationPrincipal CustomUserDetails user,
             @PathVariable Long expenseId,
             @RequestBody ExpenseUpdateRequest request
-            ){
-        expenseService.updateExpense(user.getId(), expenseId, request);
+    ) {
+        ExpenseResponse updated =
+                expenseService.updateExpense(user.getId(), expenseId, request);
 
         return ResponseEntity.ok(
-                ApiResponse.success("지출 수정 완료", null)
+                ApiResponse.success("지출 수정 완료", updated)
         );
     }
+
 
     /*지출 삭제*/
     @DeleteMapping("/{expenseId}")

@@ -38,7 +38,10 @@ public class CategoryService {
         User user = userRepository.findById(userId)
                 .orElseThrow(() -> new BadRequestException("사용자 없음"));
 
-        if (categoryRepository.existsByNameAndUserIsNullOrUser(request.name(), user)){
+        if (
+                categoryRepository.existsByNameAndUser(request.name(), user) ||
+                        categoryRepository.existsByNameAndUserIsNull(request.name())
+        ){
             throw new BadRequestException("이미 존재하는 카테고리입니다.");
         }
 
