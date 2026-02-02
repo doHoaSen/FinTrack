@@ -2,10 +2,10 @@ import {create} from "zustand";
 import { createExpenseApi, deleteExpenseApi } from "../features/expense/api";
 
 export type ExpenseCreatePayload = {
-    amount: number;
-    categoryId: number;
-    memo?: string;
-    expenseAt: string;
+  amount: number;
+  categoryId: number;
+  memo?: string;
+  expenseAt: string;
 };
 
 export type Expense = {
@@ -13,11 +13,18 @@ export type Expense = {
   amount: number;
   categoryId: number;
   categoryName: string;
-  categoryType: "FIXED" | "VARIABLE";
-  expenseAt: string;
+  categoryType: "FIXED" | "VARIABLE" | null;
+  expenseAt: string | null;
   memo?: string;
 };
 
+export type PageResponse<T> = {
+  content: T[];
+  page: number;
+  size: number;
+  totalElements: number;
+  totalPages: number;
+};
 
 type ExpenseStore = {
   isLoading: boolean;
@@ -28,7 +35,7 @@ type ExpenseStore = {
 export const useExpenseStore = create<ExpenseStore>((set) => ({
   isLoading: false,
 
-  // ✔ 공용 지출 생성 (빠른 등록 / 상세 등록 공통)
+  // 공용 지출 생성 (빠른 등록 / 상세 등록 공통)
   addExpense: async (payload) => {
     set({ isLoading: true });
     try {
@@ -38,8 +45,8 @@ export const useExpenseStore = create<ExpenseStore>((set) => ({
     }
   },
 
-  // ✔ 서버 삭제만 담당 (목록 관리는 페이지에서)
-  deleteExpense: async (id) => {
+  // 서버 삭제만 담당 (목록 관리는 페이지에서)
+   deleteExpense: async (id) => {
     set({ isLoading: true });
     try {
       await deleteExpenseApi(id);

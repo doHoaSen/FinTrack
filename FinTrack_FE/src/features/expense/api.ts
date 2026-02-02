@@ -1,12 +1,23 @@
-import type { ExpenseCreatePayload } from "../../store/expenseStore";
+import type { ExpenseCreatePayload, Expense } from "../../store/expenseStore";
 import { api } from "../../shared/api/axios";
-import type { Expense } from "../../store/expenseStore";
 
 const API_BASE = "/api/expenses";
 
 /** 지출 생성 */
-export const createExpenseApi = (payload: ExpenseCreatePayload) =>
-  api.post(API_BASE, payload);
+export const createExpenseApi = async (payload: ExpenseCreatePayload) => {
+  const res = await api.post(API_BASE, payload);
+  return res.data.data; // 생성된 expenseId
+};
+
+/** 지출 수정 */
+export const updateExpenseApi = async (
+  expenseId: number,
+  payload: Partial<ExpenseCreatePayload>
+) : Promise<Expense> => {
+  const res = await api.patch(`${API_BASE}/${expenseId}`, payload);
+  return res.data.data;
+};
+
 
 /** 지출 삭제 */
 export const deleteExpenseApi = (expenseId: number) =>
@@ -16,21 +27,22 @@ export const deleteExpenseApi = (expenseId: number) =>
 
 /** 최근 지출 조회 */
 export const getRecentExpensesApi = async (): Promise<Expense[]> => {
-  const res = await api.get("/api/expenses/recent");
+  const res = await api.get(`${API_BASE}/recent`);
   return res.data.data;
 };
 
-export type ExpenseUpdatePayload = {
-  amount?: number;
+/** 지출 조회 */
+export const getExpenseApi = async (params: {
+  year: number;
+  month: number;
+  page?: number;
+  size?: number;
   categoryId?: number;
-  memo?: string;
-  expenseAt?: string;
+  type?: "FIXED" | "VARIABLE";
+}) => {
+  const res = await api.get("/api/expenses", {params});
+
+  return res.data.data;
 }
 
-/** 지출 수정 */
-export const updateExpenseApi = (
-  expenseId: number,
-  payload: ExpenseUpdatePayload
-) => {
-  return api.patch(`api/expenses/${expenseId}`, payload);
-};
+

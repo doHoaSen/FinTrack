@@ -8,22 +8,24 @@ export type Category = {
 };
 
 type CategoryStore = {
-    categories: Category[];
-    fetchCategories: () => Promise<void>;
-    addCategory: (payload: {name: string; type: Category["type"]}) => Promise<void>;
+  categories: Category[];
+  fetchCategories: () => Promise<void>;
+  addCategory: (payload: { name: string; type: Category["type"] }) => Promise<void>;
 };
 
 export const useCategoryStore = create<CategoryStore>((set) => ({
-    categories: [],
+  categories: [],
 
-    fetchCategories: async() => {
-        const res = await api.get("/api/categories");
-        set({categories: res.data.data});
-    },
+  fetchCategories: async () => {
+    const res = await api.get("/api/categories");
+    set({ categories: res.data.data });
+  },
 
-    addCategory: async(payload) => {
-        await api.post("/api/categories", payload);
-        const res = await api.get("api/categories");
-        set({categories: res.data.data});
-    },
+  addCategory: async (payload) => {
+    await api.post("/api/categories", payload);
+
+    // 반드시 다시 조회 (서버가 ID 생성)
+    const res = await api.get("/api/categories");
+    set({ categories: res.data.data });
+  },
 }));
