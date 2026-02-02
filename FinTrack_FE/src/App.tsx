@@ -5,6 +5,7 @@ import DashboardPage from "./pages/DashboardPage";
 import SettingsPage from "./pages/SettingsPage";
 import ProtectedRoute from "./routes/ProtectedRoute";
 import ProtectedLayout from "./routes/ProtectedLayout";
+import ExpensesPage from "./pages/ExpensesPage";
 
 function App() {
   return (
@@ -25,6 +26,7 @@ function App() {
       >
         <Route path="/dashboard" element={<DashboardPage />} />
         <Route path="/settings" element={<SettingsPage />} />
+        <Route path="/expenses" element = {<ExpensesPage />} />
       </Route>
     </Routes>
   );

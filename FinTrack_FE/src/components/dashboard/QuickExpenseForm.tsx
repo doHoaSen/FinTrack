@@ -1,5 +1,4 @@
 import { useEffect, useState } from "react";
-import { useExpenseStore } from "../../store/expenseStore";
 import { useCategoryStore } from "../../store/categoryStore";
 import dayjs from "dayjs";
 import {
@@ -9,44 +8,38 @@ import {
   TextField,
   Typography,
   Dialog,
-  DialogTitle,
   DialogContent,
 } from "@mui/material";
-import { updateExpenseApi } from "../../features/expense/api";
+import { createExpenseApi, updateExpenseApi } from "../../features/expense/api";
+import type { Expense } from "../../store/expenseStore";
 
 type Props = {
   mode?: "create" | "edit";
-  initialExpense?: {
-    id: number;
-    amount: number;
-    categoryId: number;
-    expenseAt: string;
-    memo?: string;
-  };
+   initialExpense?: Expense;
   onClose?: () => void;
-  onSuccess?: (updated: any) => void;
-}
-
+  onSuccess?: (updated?: any) => void;
+};
 
 function QuickExpenseForm({
   mode = "create",
   initialExpense,
   onClose,
-  onSuccess
+  onSuccess,
 }: Props) {
   const isEdit = mode === "edit";
-  const addExpense = useExpenseStore((s) => s.addExpense);
   const { categories, fetchCategories, addCategory } = useCategoryStore();
 
   const [amount, setAmount] = useState(
     initialExpense?.amount?.toString() ?? ""
   );
-  const [categoryId, setCategoryId] = useState<number | null>(
-    initialExpense?.categoryId ?? null
+  const [categoryId, setCategoryId] = useState<number | "">(
+    initialExpense?.categoryId ?? ""
   );
   const [dateTime, setDateTime] = useState(
-    initialExpense ? dayjs(initialExpense.expenseAt) : dayjs()
-  );
+  initialExpense?.expenseAt
+    ? dayjs(initialExpense.expenseAt)
+    : dayjs()
+);
   const [memo, setMemo] = useState(initialExpense?.memo ?? "");
 
   const [open, setOpen] = useState(false);
@@ -57,40 +50,34 @@ function QuickExpenseForm({
     fetchCategories();
   }, []);
 
-  const handleSubmit = async () => {
-    if (!amount || !categoryId) return;
+ const handleSubmit = async () => {
+  if (!amount || !categoryId) return;
 
-    if (isEdit && initialExpense) {
-      await updateExpenseApi(initialExpense.id, {
-        amount: Number(amount),
-        categoryId,
-        memo,
-        expenseAt: dateTime.toISOString(),
-      });
-
-      onSuccess?.({
-        ...initialExpense,
-        amount: Number(amount),
-        categoryId,
-        memo,
-        expenseAt: dateTime.toISOString(),
-      });
-    } else {
-      await addExpense({
-        amount: Number(amount),
-        categoryId,
-        memo,
-        expenseAt: dateTime.toISOString(),
-      });
-
-      setAmount("");
-      setMemo("");
-      setCategoryId(null);
-    }
-
-    onClose?.();
+  const payload = {
+    amount: Number(amount),
+    categoryId,
+    memo,
+    expenseAt: dateTime.format("YYYY-MM-DDTHH:mm"),
   };
 
+  if (isEdit && initialExpense) {
+    const updated = await updateExpenseApi(initialExpense.id, payload);
+    onSuccess?.(updated);
+  } else {
+    const created = await createExpenseApi(payload);
+
+    // optimistic update용으로 부모에 전달
+    onSuccess?.(created);
+
+    // ✅ 폼 초기화
+    setAmount("");
+    setCategoryId("");
+    setMemo("");
+    setDateTime(dayjs());
+  }
+};
+
+  /** 카테고리 추가 */
   const handleAddCategory = async () => {
     if (!newName) return;
     await addCategory({ name: newName, type: newType });
@@ -117,7 +104,7 @@ function QuickExpenseForm({
         select
         label="카테고리"
         fullWidth
-        value={categoryId ?? ""}
+        value={categoryId}
         onChange={(e) => setCategoryId(Number(e.target.value))}
         sx={{ mb: 1 }}
       >
@@ -154,9 +141,8 @@ function QuickExpenseForm({
         {isEdit ? "수정 완료" : "등록하기"}
       </Button>
 
-      {/* 카테고리 추가 다이얼로그 */}
+      {/* 카테고리 다이얼로그 */}
       <Dialog open={open} onClose={() => setOpen(false)}>
-        <DialogTitle>카테고리 추가</DialogTitle>
         <DialogContent>
           <TextField
             label="이름"
@@ -165,7 +151,6 @@ function QuickExpenseForm({
             onChange={(e) => setNewName(e.target.value)}
             sx={{ mb: 2 }}
           />
-
           <TextField
             select
             label="유형"
@@ -185,7 +170,6 @@ function QuickExpenseForm({
     </Box>
   );
 
-  // ✨ edit 모드면 Dialog로 감싸기
   if (isEdit) {
     return (
       <Dialog open onClose={onClose} maxWidth="sm" fullWidth>
@@ -194,12 +178,7 @@ function QuickExpenseForm({
     );
   }
 
-  // create 모드는 기존처럼 바로 렌더
-  return (
-    <Box sx={{ borderRadius: 2, bgcolor: "#fafafa" }}>
-      {content}
-    </Box>
-  );
+  return <Box sx={{ borderRadius: 2, bgcolor: "#fafafa" }}>{content}</Box>;
 }
 
 export default QuickExpenseForm;
