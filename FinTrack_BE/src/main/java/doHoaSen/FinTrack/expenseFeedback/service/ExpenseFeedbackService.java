@@ -41,8 +41,8 @@ public class ExpenseFeedbackService {
 
         return FeedbackResponse.builder()
                 .monthlyTrend(buildMonthlyTrend(thisMonth, lastMonth))
-                .weekdayPattern(buildWeekdayPattern(expenseQueryRepository.getWeekdayStats(userId)))
-                .hourlyPattern(buildHourlyPattern(expenseQueryRepository.getHourlyStats(userId)))
+                .weekdayPattern(buildWeekdayPattern(expenseQueryRepository.getWeekdayStats(userId, now)))
+                .hourlyPattern(buildHourlyPattern(expenseQueryRepository.getHourlyStats(userId, now)))
                 .categoryPattern(buildCategoryPattern(categoryTotals))
                 .fixedVsVariable(buildFixedVariable(fixedVar))
                 .build();

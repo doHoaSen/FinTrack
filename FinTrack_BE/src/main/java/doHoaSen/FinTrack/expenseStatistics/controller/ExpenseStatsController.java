@@ -14,6 +14,7 @@ import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 
+import java.time.YearMonth;
 import java.util.List;
 
 @RestController
@@ -41,7 +42,7 @@ public class ExpenseStatsController {
     ){
         return ApiResponse.success(
                 "요일별 소비 통계 조회 성공",
-                expenseQueryRepository.getWeekdayStats(customUserDetails.getId())
+                expenseQueryRepository.getWeekdayStats(customUserDetails.getId(), YearMonth.now())
         );
     }
 
@@ -51,7 +52,7 @@ public class ExpenseStatsController {
     ) {
         return ApiResponse.success(
                 "시간대별 소비 통계 조회 성공",
-                expenseQueryRepository.getHourlyStats(user.getId())
+                expenseQueryRepository.getHourlyStats(user.getId(), YearMonth.now())
         );
     }
 }

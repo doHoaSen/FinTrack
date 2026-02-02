@@ -8,6 +8,8 @@ import jakarta.persistence.PersistenceContext;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Repository;
 
+import java.time.LocalDate;
+import java.time.YearMonth;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -19,7 +21,10 @@ public class ExpenseQueryRepository {
     private final EntityManager em;
 
     /* 요일별 지출 분포 (1=월 ~ 7=일, ISO 기준) */
-    public List<WeekdayStatsDto> getWeekdayStats(Long userId) {
+    public List<WeekdayStatsDto> getWeekdayStats(Long userId, YearMonth month) {
+        LocalDate start = month.atDay(1);
+        LocalDate end = month.plusMonths(1).atDay(1);
+
 
         String sql = """
             SELECT
@@ -30,12 +35,16 @@ public class ExpenseQueryRepository {
             WHERE u.id = :userId
               AND u.is_deleted = false
               AND e.expense_at IS NOT NULL
+              AND e.expense_at >= :start
+              AND e.expense_at < :end
             GROUP BY EXTRACT(ISODOW FROM e.expense_at)
             ORDER BY weekday
         """;
 
         List<Object[]> rows = em.createNativeQuery(sql)
                 .setParameter("userId", userId)
+                .setParameter("start", start)
+                .setParameter("end", end)
                 .getResultList();
 
         List<WeekdayStatsDto> result = new ArrayList<>();
@@ -52,7 +61,10 @@ public class ExpenseQueryRepository {
     }
 
     /* 시간대별 지출 분포 (0~23) */
-    public List<HourlyStatsDto> getHourlyStats(Long userId) {
+    public List<HourlyStatsDto> getHourlyStats(Long userId, YearMonth month) {
+
+        LocalDate start = month.atDay(1);
+        LocalDate end = month.plusMonths(1).atDay(1);
 
         String sql = """
             SELECT
@@ -63,12 +75,16 @@ public class ExpenseQueryRepository {
             WHERE u.id = :userId
               AND u.is_deleted = false
               AND e.expense_at IS NOT NULL
+              AND e.expense_at >= :start
+              AND e.expense_at < :end
             GROUP BY EXTRACT(HOUR FROM e.expense_at)
             ORDER BY hour
         """;
 
         List<Object[]> rows = em.createNativeQuery(sql)
                 .setParameter("userId", userId)
+                .setParameter("start", start)
+                .setParameter("end", end)
                 .getResultList();
 
         List<HourlyStatsDto> result = new ArrayList<>();
