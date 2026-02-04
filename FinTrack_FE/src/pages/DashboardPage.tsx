@@ -16,6 +16,9 @@ import MonthlyExpenseChart from "../components/dashboard/MonthlyExpenseChart";
 import getRecentRange from "../components/dashboard/util/getRecentRange";
 import StatsTabsCard from "../components/dashboard/StatsTabsCard";
 import type { WeekdayStat } from "../features/dashboard/api";
+import type { HourlyStat } from "../components/dashboard/util/normalizeHourlyStats";
+import type{ CategoryStat } from "../components/dashboard/CategoryExpenseChart";
+
 
 function DashboardPage() {
   const navigate = useNavigate();
@@ -77,10 +80,14 @@ function DashboardPage() {
   // 요일 시각화
   const [weekdayStats, setWeekdayStats] = useState<WeekdayStat[]>([]);
 
+  const [hourlyStats, setHourlyStats] = useState<HourlyStat[]>([]);
+  const [categoryStats, setCategoryStats] = useState<CategoryStat[]>([]);
 
   const fetchDashboardData = async () => {
     try {
       const data = await getDashboardApi();
+      console.log("📦 dashboard api data:", data);
+      console.log("📦 dashboard api data:", data);
 
       const currentMonth = new Date().getMonth() + 1;
       const currentMonthStat = data.monthlyStats.find(
@@ -89,6 +96,23 @@ function DashboardPage() {
 
       setMonthlyTotal(currentMonthStat?.amount ?? 0);
       setWeekdayStats(data.weekdayStats);
+      setHourlyStats(data.hourlyStats);
+
+      if (data.categoryTotals) {
+      const converted = Object.entries(data.categoryTotals).map(
+        ([name, amount]) => ({
+          name,
+          amount: Number(amount),
+        })
+      );
+
+      console.log("✅ converted categoryStats", converted);
+      setCategoryStats(converted);
+    } else {
+      console.warn("❌ categoryTotals 없음", data);
+      setCategoryStats([]);
+    }
+
     } catch {
       setError("대시보드 데이터를 불러오지 못했습니다.");
     }
@@ -154,7 +178,11 @@ function DashboardPage() {
 
       {/* C: 월별 소비 시각화 */}
       <Box mt={3} mb={3}>
-        <StatsTabsCard weekdayStats={weekdayStats} />
+        <StatsTabsCard 
+          weekdayStats={weekdayStats}
+          hourlyStats={hourlyStats}
+          categoryStats={categoryStats}
+          monthlyTotal={monthlyTotal} />
       </Box>
 
 
