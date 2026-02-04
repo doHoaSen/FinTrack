@@ -9,6 +9,7 @@ import lombok.Builder;
 import lombok.Getter;
 
 import java.util.List;
+import java.util.Map;
 
 @Getter @Builder
 public class DashboardResponse {
@@ -18,6 +19,8 @@ public class DashboardResponse {
     private List<MonthlyStatsDto> monthlyStats;
     private List<WeekdayStatsDto> weekdayStats;
     private List<HourlyStatsDto> hourlyStats;
+
+    private Map<String, Long> categoryTotals;
 
     // 목표 데이터
     private TargetResponse target;

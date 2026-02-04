@@ -49,6 +49,8 @@ public class DashboardService {
                 expenseQueryRepository.getHourlyStats(userId, now)
         );
 
+        var categoryTotals = expenseStatsRepository.getCategoryTotals(userId, now);
+
         // 목표 (없어도 정상)
         var optionalTarget = targetService.getCurrentTarget(userId);
         long usedThisMonth = expenseStatsRepository.getMonthlyTotal(userId, now);
@@ -62,6 +64,7 @@ public class DashboardService {
                 .monthlyStats(monthlyStats)
                 .weekdayStats(weekdayStats)
                 .hourlyStats(hourlyStats)
+                .categoryTotals(categoryTotals)
                 .target(target)
                 .feedback(feedback)
                 .build();
