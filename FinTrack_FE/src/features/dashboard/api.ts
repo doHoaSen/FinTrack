@@ -16,6 +16,7 @@ export type DashboardResponse = {
   monthlyStats: MonthlyStat[];
   weekdayStats: any[];
   hourlyStats: any[];
+  categoryTotals: any[];
   target: any;
   feedback: any;
 };

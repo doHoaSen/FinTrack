@@ -31,7 +31,7 @@ function RecentExpenseSection({
           const categoryText = e.categoryName ?? "기타";
 
           return (
-            <li key={e.id}>
+            <li key={`${e.id}-${e.expenseAt}`}>
               {categoryText} · {amountText}
               <button onClick={() => onEditExpense(e)}>수정</button>
               <button onClick={() => onDeleteExpense(e.id)}>삭제</button>

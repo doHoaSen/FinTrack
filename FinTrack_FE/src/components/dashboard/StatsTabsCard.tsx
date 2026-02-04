@@ -1,19 +1,26 @@
 import { Card, CardContent, Tabs, Tab, Box, Typography } from "@mui/material";
 import { useState } from "react";
 import WeekdayExpenseChart from "./WeekdayExpenseChart";
-import type { WeekdayStat } from "../../features/dashboard/api";
+import HourlyExpenseChart from "./HourlyExpenseChart";
+import CategoryExpenseChart from "./CategoryExpenseChart";
+import type { MonthlyStat, WeekdayStat } from "../../features/dashboard/api";
+import type { HourlyStat } from "./util/normalizeHourlyStats";
+import type { CategoryStat } from "./CategoryExpenseChart";
 
 type TabKey = "weekday" | "category" | "hourly";
 
 type Props = {
   weekdayStats: WeekdayStat[];
+  hourlyStats: HourlyStat[];
+  categoryStats: CategoryStat[];
+  monthlyTotal: number;
 };
 
 
-function StatsTabsCard({ weekdayStats }: Props) {
-    const [tab, setTab] = useState<"weekday" | "category" | "hourly">("weekday");
-    
-    return (
+function StatsTabsCard({ weekdayStats, hourlyStats, categoryStats, monthlyTotal }: Props) {
+  const [tab, setTab] = useState<"weekday" | "category" | "hourly">("weekday");
+
+  return (
     <Card>
       <CardContent>
         <Typography variant="subtitle1" fontWeight={600} mb={2}>
@@ -32,15 +39,11 @@ function StatsTabsCard({ weekdayStats }: Props) {
           )}
 
           {tab === "category" && (
-            <Typography color="text.secondary">
-              카테고리 그래프 준비 중
-            </Typography>
+            <CategoryExpenseChart data={categoryStats} total = {monthlyTotal} />
           )}
 
           {tab === "hourly" && (
-            <Typography color="text.secondary">
-              시간대 그래프 준비 중
-            </Typography>
+            <HourlyExpenseChart data={hourlyStats} />
           )}
         </Box>
       </CardContent>
