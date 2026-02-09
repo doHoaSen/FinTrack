@@ -18,7 +18,7 @@ type Props = {
 
 
 function StatsTabsCard({ weekdayStats, hourlyStats, categoryStats, monthlyTotal }: Props) {
-  const [tab, setTab] = useState<"weekday" | "category" | "hourly">("weekday");
+  const [tab, setTab] = useState<TabKey>("weekday");
 
   return (
     <Card>
