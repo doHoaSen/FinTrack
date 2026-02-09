@@ -6,6 +6,7 @@ import org.springframework.data.domain.Page;
 import org.springframework.data.jpa.repository.JpaRepository;
 
 import org.springframework.data.domain.Pageable;
+import org.springframework.data.jpa.repository.Modifying;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
 
@@ -44,4 +45,17 @@ public interface ExpenseRepository extends JpaRepository<Expense, Long> {
             @Param("type")ExpenseType type,
             Pageable pageable
             );
+
+    long countByCategoryId(Long categoryId);
+
+    @Modifying
+    @Query("""
+        UPDATE Expense e
+        SET e.category.id = :targetCategoryId
+        WHERE e.category.id = :deleteCategoryId
+    """)
+    void updateCategory(
+            @Param("deleteCategoryId") Long deleteCategoryId,
+            @Param("targetCategoryId") Long targetCategoryId
+    );
 }
