@@ -3,6 +3,8 @@ package doHoaSen.FinTrack.expenseFeedback.dto;
 import lombok.Builder;
 import lombok.Getter;
 
+import java.util.List;
+
 @Getter
 @Builder
 public class FeedbackResponse {
@@ -21,6 +23,7 @@ public class FeedbackResponse {
 
     private WeekCompare weekCompare;
     private WeeklyAverageTrend weeklyAverageTrend;
+    private List<CategoryMonthlyCompare> categoryMonthlyCompare;
 
     @Getter @Builder
     public static class MonthlyTrend {
@@ -58,6 +61,7 @@ public class FeedbackResponse {
         private Long targetAmount;
         private Long usedAmount;
         private Double ratio;
+        private boolean achieved;
         private String message;
     }
 
@@ -112,6 +116,15 @@ public class FeedbackResponse {
         private Double thisWeekAvg;
         private Double lastWeekAvg;
         private Double diffPercent;
+        private String message;
+    }
+
+    @Getter @Builder
+    public static class CategoryMonthlyCompare {
+        private String categoryName;
+        private Long thisMonth;
+        private Long lastMonth;
+        private Double changeRate;
         private String message;
     }
 }
