@@ -1,18 +1,19 @@
 import SummarySection from "../components/dashboard/SummarySection";
 import QuickExpenseForm from "../components/dashboard/QuickExpenseForm";
-import GoalHistoryPreview from "../components/dashboard/GoalHistoryPreview";
 import RecentExpenseSection from "../components/dashboard/RecentExpenseSection";
+import TargetProgressCard from "../components/dashboard/TargetProgressCard";
+import FeedbackSection from "../components/dashboard/FeedbackSection";
+import TargetSettingDialog from "../components/dashboard/TargetSettingDialog";
 
 import { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { getDashboardApi } from "../features/dashboard/api";
-import type { MonthlyStat } from "../features/dashboard/api";
+import type { MonthlyStat, TargetResponse, FeedbackResponse } from "../features/dashboard/api";
 import { Grid, Box, Typography } from "@mui/material";
 import { getRecentExpensesApi } from "../features/expense/api";
 import type { Expense } from "../store/expenseStore";
 import { useExpenseStore } from "../store/expenseStore";
 import { useDashboardStore } from "../store/dashboardStore";
-import MonthlyExpenseChart from "../components/dashboard/MonthlyExpenseChart";
 import getRecentRange from "../components/dashboard/util/getRecentRange";
 import StatsTabsCard from "../components/dashboard/StatsTabsCard";
 import type { WeekdayStat } from "../features/dashboard/api";
@@ -76,6 +77,11 @@ function DashboardPage() {
 
 
   // 월별지출 시각화
+  const [target, setTarget] = useState<TargetResponse | null>(null);
+  const [feedback, setFeedback] = useState<FeedbackResponse | null>(null);
+  const [targetDialogOpen, setTargetDialogOpen] = useState(false);
+
+  // 월별지출 시각화
   const [monthlyStats, setMonthlyStats] = useState<MonthlyStat[]>([]);
   // 요일 시각화
   const [weekdayStats, setWeekdayStats] = useState<WeekdayStat[]>([]);
@@ -95,8 +101,11 @@ function DashboardPage() {
       );
 
       setMonthlyTotal(currentMonthStat?.amount ?? 0);
+      setMonthlyStats(data.monthlyStats);
       setWeekdayStats(data.weekdayStats);
       setHourlyStats(data.hourlyStats);
+      setTarget(data.target);
+      setFeedback(data.feedback);
 
       if (data.categoryTotals) {
       const converted = Object.entries(data.categoryTotals).map(
@@ -176,13 +185,15 @@ function DashboardPage() {
         </Grid>
       </Grid>
 
-      {/* C: 월별 소비 시각화 */}
+      {/* C: 소비 패턴 탭 */}
       <Box mt={3} mb={3}>
-        <StatsTabsCard 
+        <StatsTabsCard
           weekdayStats={weekdayStats}
           hourlyStats={hourlyStats}
           categoryStats={categoryStats}
-          monthlyTotal={monthlyTotal} />
+          monthlyStats={monthlyStats}
+          monthlyTotal={monthlyTotal}
+        />
       </Box>
 
 
@@ -244,8 +255,23 @@ function DashboardPage() {
         )}
       </Box>
 
-      {/* E (임시: 목표 히스토리) */}
-      <GoalHistoryPreview />
+      {/* E: 이번 달 목표 */}
+      <Box mb={3}>
+        <TargetProgressCard
+          target={target}
+          onSetTarget={() => setTargetDialogOpen(true)}
+        />
+      </Box>
+
+      {/* F: AI 소비 피드백 */}
+      <FeedbackSection feedback={feedback} />
+
+      <TargetSettingDialog
+        open={targetDialogOpen}
+        target={target}
+        onClose={() => setTargetDialogOpen(false)}
+        onSuccess={fetchDashboardData}
+      />
     </Box>
   );
 }
