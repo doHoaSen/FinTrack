@@ -1,6 +1,6 @@
 import { Outlet, useNavigate, useLocation } from "react-router-dom";
 import { useAuthStore } from "../store/authStore";
-import { withdrawApi } from "../features/auth/api";
+import { withdrawApi, logoutApi } from "../features/auth/api";
 import {
   Box,
   Card,
@@ -16,7 +16,8 @@ function SettingsPage() {
   const location = useLocation();
   const logout = useAuthStore((s) => s.logout);
 
-  const handleLogout = () => {
+  const handleLogout = async () => {
+    await logoutApi();
     logout();
     navigate("/login");
   };
@@ -24,6 +25,7 @@ function SettingsPage() {
   const handleWithdraw = async () => {
     if (!confirm("정말 탈퇴하시겠습니까?")) return;
     await withdrawApi();
+    await logoutApi();
     logout();
     navigate("/login");
   };
@@ -38,7 +40,6 @@ function SettingsPage() {
       </Typography>
 
       <Box sx={{ display: "flex", gap: 3 }}>
-        {/* 좌측 메뉴 */}
         <Card sx={{ width: 240, height: "fit-content" }}>
           <List>
             <ListItemButton
@@ -63,7 +64,6 @@ function SettingsPage() {
           </List>
         </Card>
 
-        {/* 우측 상세 */}
         <Box sx={{ flex: 1 }}>
           <Outlet />
         </Box>

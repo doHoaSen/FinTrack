@@ -7,9 +7,9 @@ type Props = {
 }
 
 function ProtectedRoute({children}: Props){
-    const accessToken = useAuthStore((s) => s.accessToken);
-    if (!accessToken){
-        return <Navigate to ="/login" replace />;
+    const user = useAuthStore((s) => s.user);
+    if (!user){
+        return <Navigate to="/login" replace />;
     }
 
     return children;
