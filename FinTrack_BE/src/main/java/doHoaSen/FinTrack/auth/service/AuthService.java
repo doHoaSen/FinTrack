@@ -3,6 +3,7 @@ package doHoaSen.FinTrack.auth.service;
 import doHoaSen.FinTrack.auth.dto.LoginRequest;
 import doHoaSen.FinTrack.auth.dto.LoginResponse;
 import doHoaSen.FinTrack.auth.security.JwtProvider;
+import doHoaSen.FinTrack.global.exception.BadRequestException;
 import doHoaSen.FinTrack.user.entity.User;
 import doHoaSen.FinTrack.user.repository.UserRepository;
 import lombok.AllArgsConstructor;
@@ -38,5 +39,13 @@ public class AuthService {
                 accessToken,
                 refreshToken);
 
+    }
+
+    public String refresh(String refreshToken){
+        if (!jwtProvider.validateToken(refreshToken)) {
+            throw new BadRequestException("유효하지 않은 refresh token입니다.");
+        }
+        String email = jwtProvider.getEmailFromToken(refreshToken);
+        return jwtProvider.generateAccessToken(email);
     }
 }

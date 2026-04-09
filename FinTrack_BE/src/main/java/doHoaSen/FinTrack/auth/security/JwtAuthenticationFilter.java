@@ -4,6 +4,7 @@ import doHoaSen.FinTrack.auth.dto.CustomUserDetails;
 import doHoaSen.FinTrack.user.repository.UserRepository;
 import jakarta.servlet.FilterChain;
 import jakarta.servlet.ServletException;
+import jakarta.servlet.http.Cookie;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
 import lombok.RequiredArgsConstructor;
@@ -27,17 +28,35 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
                                     HttpServletResponse response,
                                     FilterChain filterChain) throws ServletException, IOException {
 
-        // 헤더 추출
-        String authHeader = request.getHeader("Authorization");
+//        // 헤더 추출
+//        String authHeader = request.getHeader("Authorization");
+//
+//        // 토큰이 없거나 "Bearer "로 시작하지 않으면 패스 (인증 불필요한 요청)
+//        if (authHeader == null || !authHeader.startsWith("Bearer ")){
+//            filterChain.doFilter(request, response);
+//            return;
+//        }
+//
+//        // 실제 토큰 부분 추출
+//         String token = authHeader.substring(7);
 
-        // 토큰이 없거나 "Bearer "로 시작하지 않으면 패스 (인증 불필요한 요청)
-        if (authHeader == null || !authHeader.startsWith("Bearer ")){
+
+        String token = null;
+        Cookie[] cookies = request.getCookies();
+        if (cookies != null) {
+            for (Cookie cookie : cookies) {
+                if ("access_token".equals(cookie.getName())) {
+                    token = cookie.getValue();
+                    break;
+                }
+            }
+        }
+
+        if (token == null){
             filterChain.doFilter(request, response);
             return;
         }
 
-        // 실제 토큰 부분 추출
-         String token = authHeader.substring(7);
 
         // JWT 유효성 검사 (만료, 위조, 서명 불일치 등 체크)
         // 인증 실패 시 바로 401 반환하도록 변경
@@ -78,7 +97,6 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
         // 다음 필터로 요청 전달
         filterChain.doFilter(request, response);
 
-        System.out.println("authHeader = " + authHeader);
         System.out.println("token = " + token);
         System.out.println("validateToken = " + jwtProvider.validateToken(token));
         System.out.println("email = " + email);
@@ -89,6 +107,6 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
     @Override
     protected boolean shouldNotFilter(HttpServletRequest request){
         String path = request.getRequestURI();
-        return path.startsWith("/api/auth") || path.startsWith("api/user");
+        return path.startsWith("/api/auth") || path.startsWith("/api/user");
     }
 }
