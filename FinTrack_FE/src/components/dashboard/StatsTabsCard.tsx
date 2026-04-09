@@ -3,21 +3,22 @@ import { useState } from "react";
 import WeekdayExpenseChart from "./WeekdayExpenseChart";
 import HourlyExpenseChart from "./HourlyExpenseChart";
 import CategoryExpenseChart from "./CategoryExpenseChart";
+import MonthlyExpenseChart from "./MonthlyExpenseChart";
 import type { MonthlyStat, WeekdayStat } from "../../features/dashboard/api";
 import type { HourlyStat } from "./util/normalizeHourlyStats";
 import type { CategoryStat } from "./CategoryExpenseChart";
 
-type TabKey = "weekday" | "category" | "hourly";
+type TabKey = "weekday" | "category" | "hourly" | "monthly";
 
 type Props = {
   weekdayStats: WeekdayStat[];
   hourlyStats: HourlyStat[];
   categoryStats: CategoryStat[];
+  monthlyStats: MonthlyStat[];
   monthlyTotal: number;
 };
 
-
-function StatsTabsCard({ weekdayStats, hourlyStats, categoryStats, monthlyTotal }: Props) {
+function StatsTabsCard({ weekdayStats, hourlyStats, categoryStats, monthlyStats, monthlyTotal }: Props) {
   const [tab, setTab] = useState<TabKey>("weekday");
 
   return (
@@ -31,19 +32,21 @@ function StatsTabsCard({ weekdayStats, hourlyStats, categoryStats, monthlyTotal 
           <Tab label="요일별" value="weekday" />
           <Tab label="카테고리별" value="category" />
           <Tab label="시간대별" value="hourly" />
+          <Tab label="월별" value="monthly" />
         </Tabs>
 
         <Box mt={3}>
           {tab === "weekday" && (
             <WeekdayExpenseChart data={weekdayStats} />
           )}
-
           {tab === "category" && (
-            <CategoryExpenseChart data={categoryStats} total = {monthlyTotal} />
+            <CategoryExpenseChart data={categoryStats} total={monthlyTotal} />
           )}
-
           {tab === "hourly" && (
             <HourlyExpenseChart data={hourlyStats} />
+          )}
+          {tab === "monthly" && (
+            <MonthlyExpenseChart data={monthlyStats} />
           )}
         </Box>
       </CardContent>
