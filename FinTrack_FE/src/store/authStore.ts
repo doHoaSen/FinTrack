@@ -1,30 +1,28 @@
 import { create } from "zustand";
 
 type User = {
-  name: string;
-  email: string;
+    name: string;
+    email: string;
 };
 
 type AuthStore = {
-  accessToken: string | null;
-  user: User | null;
-  isLoading: boolean;
-  login: (token: string, user: User) => void;
-  logout: () => void;
+    user: User | null;
+    login: (user: User) => void;
+    logout: () => void;
 };
 
+const savedUser = localStorage.getItem("user");
+
 export const useAuthStore = create<AuthStore>((set) => ({
-  accessToken: localStorage.getItem("accessToken"),
-  user: null,
-  isLoading: false,
+    user: savedUser ? JSON.parse(savedUser) : null,
 
-  login: (token, user) => {
-    localStorage.setItem("accessToken", token);
-    set({ accessToken: token, user });
-  },
+    login: (user) => {
+        localStorage.setItem("user", JSON.stringify(user));
+        set({ user });
+    },
 
-  logout: () => {
-    localStorage.removeItem("accessToken");
-    set({ accessToken: null, user: null });
-  },
+    logout: () => {
+        localStorage.removeItem("user");
+        set({ user: null });
+    },
 }));
