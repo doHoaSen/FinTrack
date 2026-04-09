@@ -3,13 +3,12 @@ import { api } from "../../shared/api/axios";
 type LoginRequest = {
     email: string;
     password: string;
+    autoLogin: boolean;
 };
 
 type LoginResponse = {
-    accessToken: string;
     name: string;
     email: string;
-    refreshToken: string;
 };
 
 type SignupRequest = {
@@ -19,9 +18,13 @@ type SignupRequest = {
     confirmPassword: string;
 };
 
-export const loginApi = async (payload: LoginRequest): Promise<LoginResponse> =>{
+export const loginApi = async (payload: LoginRequest): Promise<LoginResponse> => {
     const res = await api.post("/api/auth/login", payload);
     return res.data.data;
+};
+
+export const logoutApi = async () => {
+    await api.post("/api/auth/logout");
 };
 
 export const signupApi = async (data: SignupRequest) => {
@@ -29,5 +32,5 @@ export const signupApi = async (data: SignupRequest) => {
 };
 
 export const withdrawApi = async () => {
-    await api.delete("/api/user/me")
-}
+    await api.delete("/api/user/me");
+};

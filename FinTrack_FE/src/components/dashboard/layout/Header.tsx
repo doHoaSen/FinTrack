@@ -1,12 +1,14 @@
 import { useNavigate } from "react-router-dom";
 import { useAuthStore } from "../../../store/authStore";
+import { logoutApi } from "../../../features/auth/api";
 
 function Header() {
   const navigate = useNavigate();
   const logout = useAuthStore((s) => s.logout);
   const user = useAuthStore((s) => s.user);
 
-  const handleLogout = () => {
+  const handleLogout = async () => {
+    await logoutApi();
     logout();
     navigate("/login");
   };
