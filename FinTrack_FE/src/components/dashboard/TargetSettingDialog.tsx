@@ -12,6 +12,22 @@ import { useState } from "react";
 import type { TargetResponse } from "../../features/dashboard/api";
 import { createTargetApi, updateTargetApi, deleteTargetApi } from "../../features/target/api";
 
+function toKoreanAmount(value: string): string {
+  const num = Number(value);
+  if (!value || isNaN(num) || num <= 0) return "";
+
+  const 억 = Math.floor(num / 100_000_000);
+  const 만 = Math.floor((num % 100_000_000) / 10_000);
+  const 나머지 = num % 10_000;
+
+  const parts: string[] = [];
+  if (억 > 0) parts.push(`${억}억`);
+  if (만 > 0) parts.push(`${만}만`);
+  if (나머지 > 0) parts.push(`${나머지.toLocaleString()}`);
+
+  return parts.join(" ") + "원";
+}
+
 type Props = {
   open: boolean;
   target: TargetResponse | null;
@@ -91,7 +107,13 @@ function TargetSettingDialog({ open, target, onClose, onSuccess }: Props) {
               setError("");
             }}
             error={!!error}
-            helperText={error}
+            helperText={
+              error
+                ? error
+                : toKoreanAmount(amount)
+                ? `${toKoreanAmount(amount)}`
+                : " "
+            }
             fullWidth
             autoFocus
             inputProps={{ min: 1 }}
