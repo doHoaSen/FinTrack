@@ -1,7 +1,6 @@
 import SummarySection from "../components/dashboard/SummarySection";
 import QuickExpenseForm from "../components/dashboard/QuickExpenseForm";
 import RecentExpenseSection from "../components/dashboard/RecentExpenseSection";
-import TargetProgressCard from "../components/dashboard/TargetProgressCard";
 import FeedbackSection from "../components/dashboard/FeedbackSection";
 import TargetSettingDialog from "../components/dashboard/TargetSettingDialog";
 
@@ -148,7 +147,11 @@ function DashboardPage() {
       {/* A + B */}
       <Grid container spacing={2}>
         <Grid size={{ xs: 12, md: 6 }}>
-          <SummarySection monthlyTotal={monthlyTotal} />
+          <SummarySection
+            monthlyTotal={monthlyTotal}
+            target={target}
+            onSetTarget={() => setTargetDialogOpen(true)}
+          />
         </Grid>
 
         <Grid size={{ xs: 12, md: 6 }}>
@@ -255,15 +258,7 @@ function DashboardPage() {
         )}
       </Box>
 
-      {/* E: 이번 달 목표 */}
-      <Box mb={3}>
-        <TargetProgressCard
-          target={target}
-          onSetTarget={() => setTargetDialogOpen(true)}
-        />
-      </Box>
-
-      {/* F: AI 소비 피드백 */}
+      {/* E: AI 소비 피드백 */}
       <FeedbackSection feedback={feedback} />
 
       <TargetSettingDialog
