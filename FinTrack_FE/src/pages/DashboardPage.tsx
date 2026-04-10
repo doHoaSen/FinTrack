@@ -188,8 +188,13 @@ function DashboardPage() {
         </Grid>
       </Grid>
 
-      {/* C: 소비 패턴 탭 */}
+      {/* B-1: 스마트 인사이트 */}
       <Box mt={3} mb={3}>
+        <FeedbackSection feedback={feedback} />
+      </Box>
+
+      {/* C: 소비 패턴 탭 */}
+      <Box mb={3}>
         <StatsTabsCard
           weekdayStats={weekdayStats}
           hourlyStats={hourlyStats}
@@ -258,8 +263,6 @@ function DashboardPage() {
         )}
       </Box>
 
-      {/* E: AI 소비 피드백 */}
-      <FeedbackSection feedback={feedback} />
 
       <TargetSettingDialog
         open={targetDialogOpen}
