@@ -1,4 +1,4 @@
-import { Card, CardContent, Tabs, Tab, Box, Typography } from "@mui/material";
+import { Card, CardContent, Box, Typography, ButtonGroup, Button } from "@mui/material";
 import { useState } from "react";
 import WeekdayExpenseChart from "./WeekdayExpenseChart";
 import HourlyExpenseChart from "./HourlyExpenseChart";
@@ -28,12 +28,34 @@ function StatsTabsCard({ weekdayStats, hourlyStats, categoryStats, monthlyStats,
           이번 달 소비 패턴
         </Typography>
 
-        <Tabs value={tab} onChange={(_, v) => setTab(v)}>
-          <Tab label="요일별" value="weekday" />
-          <Tab label="카테고리별" value="category" />
-          <Tab label="시간대별" value="hourly" />
-          <Tab label="월별" value="monthly" />
-        </Tabs>
+        <ButtonGroup size="small" sx={{ flexWrap: "wrap", gap: 0 }}>
+          {(["weekday", "category", "hourly", "monthly"] as TabKey[]).map((key, idx) => {
+            const labels: Record<TabKey, string> = {
+              weekday: "요일별",
+              category: "카테고리별",
+              hourly: "시간대별",
+              monthly: "월별",
+            };
+            const active = tab === key;
+            return (
+              <Button
+                key={key}
+                onClick={() => setTab(key)}
+                variant={active ? "contained" : "outlined"}
+                disableElevation
+                sx={{
+                  borderRadius: idx === 0 ? "20px 0 0 20px" : idx === 3 ? "0 20px 20px 0" : 0,
+                  px: 2,
+                  fontWeight: active ? 700 : 400,
+                  textTransform: "none",
+                  whiteSpace: "nowrap",
+                }}
+              >
+                {labels[key]}
+              </Button>
+            );
+          })}
+        </ButtonGroup>
 
         <Box mt={3}>
           {tab === "weekday" && (
