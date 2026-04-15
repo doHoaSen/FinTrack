@@ -89,12 +89,16 @@ type Props = {
   onMore: () => void;
 };
 
+const MAX_DISPLAY = 5;
+
 function RecentExpenseSection({ expenses, onDeleteExpense, onEditExpense, onMore }: Props) {
+  const displayed = expenses.slice(0, MAX_DISPLAY);
+
   return (
-    <Card>
-      <CardContent sx={{ p: 3 }}>
+    <Card sx={{ height: "100%", display: "flex", flexDirection: "column" }}>
+      <CardContent sx={{ p: 3, flex: 1, display: "flex", flexDirection: "column", overflow: "hidden" }}>
         {/* 헤더 */}
-        <Box display="flex" alignItems="center" justifyContent="space-between" mb={2}>
+        <Box display="flex" alignItems="center" justifyContent="space-between" mb={2} flexShrink={0}>
           <Typography variant="subtitle1" fontWeight={600} color="text.secondary">
             최근 지출
           </Typography>
@@ -103,13 +107,15 @@ function RecentExpenseSection({ expenses, onDeleteExpense, onEditExpense, onMore
           </Button>
         </Box>
 
-        {expenses.length === 0 ? (
-          <Typography variant="body2" color="text.disabled" textAlign="center" py={3}>
-            이번 달 최근 지출이 없습니다.
-          </Typography>
+        {displayed.length === 0 ? (
+          <Box flex={1} display="flex" alignItems="center" justifyContent="center">
+            <Typography variant="body2" color="text.disabled">
+              이번 달 최근 지출이 없습니다.
+            </Typography>
+          </Box>
         ) : (
-          <Box>
-            {expenses.map((e, idx) => {
+          <Box sx={{ flex: 1, overflowY: "auto" }}>
+            {displayed.map((e, idx) => {
               const meta = getCategoryMeta(e.categoryName ?? "");
               const Icon = meta.icon;
               const label = e.memo?.trim() || e.categoryName || "기타";
