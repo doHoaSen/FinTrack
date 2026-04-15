@@ -193,29 +193,31 @@ function DashboardPage() {
         <FeedbackSection feedback={feedback} />
       </Box>
 
-      {/* C: 소비 패턴 탭 */}
-      <Box mb={3}>
-        <StatsTabsCard
-          weekdayStats={weekdayStats}
-          hourlyStats={hourlyStats}
-          categoryStats={categoryStats}
-          monthlyStats={monthlyStats}
-          monthlyTotal={monthlyTotal}
-        />
-      </Box>
+      {/* C + D: 소비 패턴 탭 + 최근 지출 */}
+      <Grid container spacing={2} mb={3} alignItems="stretch">
+        <Grid size={{ xs: 12, md: 7 }}>
+          <StatsTabsCard
+            weekdayStats={weekdayStats}
+            hourlyStats={hourlyStats}
+            categoryStats={categoryStats}
+            monthlyStats={monthlyStats}
+            monthlyTotal={monthlyTotal}
+          />
+        </Grid>
 
+        <Grid size={{ xs: 12, md: 5 }}>
+          <RecentExpenseSection
+            expenses={recentExpenses}
+            onDeleteExpense={handleDelete}
+            onEditExpense={(expense) => setEditingExpense(expense)}
+            onMore={() => navigate("/expenses")}
+          />
 
-      {/* D */}
-      <Box mb={3}>
-        <RecentExpenseSection
-          expenses={recentExpenses}
-          onDeleteExpense={handleDelete}
-          onEditExpense={(expense) => setEditingExpense(expense)}
-          onMore={() => navigate("/expenses")}
-        />
+        </Grid>
+      </Grid>
 
-        {/* 수정 모달 */}
-        {editingExpense && (
+      {/* 수정 모달 */}
+      {editingExpense && (
           <QuickExpenseForm
             mode="edit"
             initialExpense={editingExpense}
@@ -261,8 +263,6 @@ function DashboardPage() {
 
           />
         )}
-      </Box>
-
 
       <TargetSettingDialog
         open={targetDialogOpen}
