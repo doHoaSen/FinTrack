@@ -1,5 +1,6 @@
 import { useRef, useState, useEffect } from "react";
-import { Box, Card, CardContent, Typography, Chip, IconButton } from "@mui/material";
+import { useNavigate } from "react-router-dom";
+import { Box, Card, CardContent, Typography, Chip, IconButton, Button } from "@mui/material";
 import TrendingUpIcon from "@mui/icons-material/TrendingUp";
 import TrendingDownIcon from "@mui/icons-material/TrendingDown";
 import TrendingFlatIcon from "@mui/icons-material/TrendingFlat";
@@ -84,6 +85,7 @@ function getTrendIcon(status: string, color: string) {
 }
 
 function FeedbackSection({ feedback }: Props) {
+  const navigate = useNavigate();
   const scrollRef = useRef<HTMLDivElement>(null);
   const [canLeft, setCanLeft] = useState(false);
   const [canRight, setCanRight] = useState(false);
@@ -274,8 +276,11 @@ function FeedbackSection({ feedback }: Props) {
           </Typography>
         </Box>
 
-        {/* 화살표 */}
-        <Box display="flex" gap={0.5}>
+        {/* 더보기 */}
+        <Box display="flex" alignItems="center" gap={0.5}>
+          <Button size="small" variant="text" onClick={() => navigate("/analytics")} sx={{ minWidth: 0 }}>
+            더보기
+          </Button>
           <IconButton size="small" onClick={() => scroll("left")} disabled={!canLeft}
             sx={{ border: "1px solid", borderColor: "divider", borderRadius: 2 }}>
             <ChevronLeftIcon fontSize="small" />
