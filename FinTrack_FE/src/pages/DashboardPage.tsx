@@ -139,7 +139,7 @@ function DashboardPage() {
   return (
     <Box sx={{ p: 3 }}>
       <Typography variant="h5" fontWeight={600} mb={3}>
-        FINTRACK DASHBOARD
+        DASHBOARD
       </Typography>
 
       {error && <Typography color="error">{error}</Typography>}
