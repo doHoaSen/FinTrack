@@ -9,6 +9,7 @@ import ProtectedLayout from "./routes/ProtectedLayout";
 import ExpensesPage from "./pages/ExpensesPage";
 import CategoryManagePage from "./components/category/CategoryManagePage";
 import BudgetPage from "./pages/BudgetPage";
+import AnalyticsPage from "./pages/AnalyticsPage";
 
 function ComingSoonPage({ title }: { title: string }) {
   return (
@@ -42,7 +43,7 @@ function App() {
         </Route>
         <Route path="/expenses" element={<ExpensesPage />} />
         <Route path="/budget" element={<BudgetPage />} />
-        <Route path="/analytics" element={<ComingSoonPage title="소비 분석" />} />
+        <Route path="/analytics" element={<AnalyticsPage />} />
       </Route>
     </Routes>
   );
