@@ -8,6 +8,7 @@ import ProtectedRoute from "./routes/ProtectedRoute";
 import ProtectedLayout from "./routes/ProtectedLayout";
 import ExpensesPage from "./pages/ExpensesPage";
 import CategoryManagePage from "./components/category/CategoryManagePage";
+import BudgetPage from "./pages/BudgetPage";
 
 function ComingSoonPage({ title }: { title: string }) {
   return (
@@ -40,7 +41,7 @@ function App() {
           <Route path="categories" element={<CategoryManagePage />} />
         </Route>
         <Route path="/expenses" element={<ExpensesPage />} />
-        <Route path="/budget" element={<ComingSoonPage title="예산 관리" />} />
+        <Route path="/budget" element={<BudgetPage />} />
         <Route path="/analytics" element={<ComingSoonPage title="소비 분석" />} />
       </Route>
     </Routes>
