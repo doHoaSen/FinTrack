@@ -9,6 +9,8 @@ import {
   Typography,
   Dialog,
   DialogContent,
+  Card,
+  CardContent,
 } from "@mui/material";
 import { createExpenseApi, updateExpenseApi } from "../../features/expense/api";
 import type { Expense } from "../../store/expenseStore";
@@ -178,7 +180,13 @@ function QuickExpenseForm({
     );
   }
 
-  return <Box sx={{ borderRadius: 2, bgcolor: "#fafafa" }}>{content}</Box>;
+  return (
+    <Card sx={{ height: "100%" }}>
+      <CardContent sx={{ p: 0, "&:last-child": { pb: 0 } }}>
+        {content}
+      </CardContent>
+    </Card>
+  );
 }
 
 export default QuickExpenseForm;
