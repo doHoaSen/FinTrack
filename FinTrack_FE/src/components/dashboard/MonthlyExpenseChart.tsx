@@ -3,14 +3,16 @@ import {
   CategoryScale,
   LinearScale,
   BarElement,
+  LineElement,
+  PointElement,
   Tooltip,
   type ChartOptions,
 } from "chart.js";
-import { Bar } from "react-chartjs-2";
+import { Chart } from "react-chartjs-2";
 import { Typography } from "@mui/material";
 import type { MonthlyStat } from "../../features/dashboard/api";
 
-ChartJS.register(CategoryScale, LinearScale, BarElement, Tooltip);
+ChartJS.register(CategoryScale, LinearScale, BarElement, LineElement, PointElement, Tooltip);
 
 type Props = {
   data: MonthlyStat[];
@@ -18,6 +20,18 @@ type Props = {
 
 const MONTH_LABELS = ["1월","2월","3월","4월","5월","6월","7월","8월","9월","10월","11월","12월"];
 const CURRENT_MONTH = new Date().getMonth() + 1;
+
+const TOOLTIP_STYLE = {
+  backgroundColor: "rgba(255,255,255,0.97)",
+  titleColor: "#333",
+  bodyColor: "#555",
+  borderColor: "#e0e0e0",
+  borderWidth: 1,
+  padding: 12,
+  cornerRadius: 10,
+  titleFont: { size: 13, weight: "bold" as const },
+  bodyFont: { size: 13 },
+};
 
 function MonthlyExpenseChart({ data }: Props) {
   if (!data.length) {
@@ -28,28 +42,47 @@ function MonthlyExpenseChart({ data }: Props) {
     );
   }
 
-  const backgroundColors = data.map((d) =>
-    d.month === CURRENT_MONTH
-      ? "rgba(21, 101, 192, 0.9)"
-      : "rgba(66, 165, 245, 0.5)"
-  );
-  const hoverColors = data.map((d) =>
-    d.month === CURRENT_MONTH
-      ? "rgba(21, 101, 192, 1)"
-      : "rgba(66, 165, 245, 0.75)"
-  );
+  const amounts = data.map((d) => d.amount);
+  const avg = Math.round(amounts.reduce((s, a) => s + a, 0) / amounts.length);
+  const maxIdx = amounts.reduce((mi, a, i, arr) => (a > arr[mi] ? i : mi), 0);
+
+  const backgroundColors = data.map((d, i) => {
+    if (i === maxIdx) return "rgba(13, 71, 161, 0.92)";
+    if (d.month === CURRENT_MONTH) return "rgba(25, 118, 210, 0.82)";
+    return "rgba(66, 165, 245, 0.45)";
+  });
+  const hoverColors = data.map((d, i) => {
+    if (i === maxIdx) return "rgba(13, 71, 161, 1)";
+    if (d.month === CURRENT_MONTH) return "rgba(25, 118, 210, 1)";
+    return "rgba(66, 165, 245, 0.7)";
+  });
 
   const chartData = {
     labels: data.map((d) => MONTH_LABELS[d.month - 1]),
     datasets: [
       {
-        data: data.map((d) => d.amount),
+        type: "bar" as const,
+        data: amounts,
         backgroundColor: backgroundColors,
         hoverBackgroundColor: hoverColors,
         borderRadius: 8,
         borderSkipped: false as const,
         barPercentage: 0.55,
         categoryPercentage: 0.7,
+        order: 2,
+      },
+      {
+        type: "line" as const,
+        data: Array(data.length).fill(avg),
+        borderColor: "rgba(239, 108, 2, 0.6)",
+        borderWidth: 1.5,
+        borderDash: [6, 4],
+        pointRadius: 0,
+        pointHoverRadius: 0,
+        fill: false,
+        tension: 0,
+        order: 1,
+        label: `평균 ${avg.toLocaleString()}원`,
       },
     ],
   };
@@ -61,23 +94,40 @@ function MonthlyExpenseChart({ data }: Props) {
     plugins: {
       legend: { display: false },
       tooltip: {
+        ...TOOLTIP_STYLE,
+        filter: (item) => item.datasetIndex === 0, // 바 데이터만 툴팁
         callbacks: {
-          label: (ctx) => ` ${ctx.parsed.y.toLocaleString()}원`,
+          title: (items) => items[0].label,
+          label: (ctx) => ` ₩${(ctx.parsed.y as number).toLocaleString()}`,
+          afterLabel: (ctx) => {
+            const diff = (ctx.parsed.y as number) - avg;
+            return diff === 0
+              ? ""
+              : ` 평균 대비 ${diff > 0 ? "+" : ""}${Math.abs(diff).toLocaleString()}원`;
+          },
         },
-        backgroundColor: "rgba(255,255,255,0.95)",
-        titleColor: "#333",
-        bodyColor: "#555",
-        borderColor: "#e0e0e0",
-        borderWidth: 1,
-        padding: 10,
-        cornerRadius: 8,
       },
     },
     scales: {
       x: {
         grid: { display: false },
         border: { display: false },
-        ticks: { color: "#999", font: { size: 12 } },
+        ticks: {
+          color: (ctx) => {
+            const d = data[ctx.index];
+            if (!d) return "#aaa";
+            if (ctx.index === maxIdx) return "#0d47a1";
+            if (d.month === CURRENT_MONTH) return "#1976d2";
+            return "#aaa";
+          },
+          font: (ctx) => ({
+            size: 12,
+            weight:
+              ctx.index === maxIdx || data[ctx.index]?.month === CURRENT_MONTH
+                ? "bold"
+                : "normal",
+          }),
+        },
       },
       y: {
         grid: { color: "#f0f0f0" },
@@ -92,8 +142,8 @@ function MonthlyExpenseChart({ data }: Props) {
   };
 
   return (
-    <div style={{ width: "100%", height: 250 }}>
-      <Bar data={chartData} options={options} />
+    <div style={{ width: "100%", height: 255 }}>
+      <Chart type="bar" data={chartData as any} options={options as any} />
     </div>
   );
 }

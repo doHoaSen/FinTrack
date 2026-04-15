@@ -2,16 +2,19 @@ import {
   Chart as ChartJS,
   CategoryScale,
   LinearScale,
-  BarElement,
+  LineElement,
+  PointElement,
+  Filler,
   Tooltip,
   type ChartOptions,
 } from "chart.js";
-import { Bar } from "react-chartjs-2";
+import { Line } from "react-chartjs-2";
 import { Box } from "@mui/material";
+import { useRef, useEffect } from "react";
 import { normalizeHourlyStats } from "./util/normalizeHourlyStats";
 import type { HourlyStat } from "./util/normalizeHourlyStats";
 
-ChartJS.register(CategoryScale, LinearScale, BarElement, Tooltip);
+ChartJS.register(CategoryScale, LinearScale, LineElement, PointElement, Filler, Tooltip);
 
 type Props = {
   data: HourlyStat[];
@@ -19,52 +22,85 @@ type Props = {
 
 const CURRENT_HOUR = new Date().getHours();
 
+const TOOLTIP_STYLE = {
+  backgroundColor: "rgba(255,255,255,0.97)",
+  titleColor: "#333",
+  bodyColor: "#9c27b0",
+  borderColor: "#e0e0e0",
+  borderWidth: 1,
+  padding: 12,
+  cornerRadius: 10,
+  titleFont: { size: 13, weight: "bold" as const },
+  bodyFont: { size: 13 },
+};
+
 function HourlyExpenseChart({ data }: Props) {
+  const chartRef = useRef<ChartJS<"line">>(null);
   const normalized = normalizeHourlyStats(data);
 
-  const backgroundColors = normalized.map((_, i) =>
-    i === CURRENT_HOUR
-      ? "rgba(106, 27, 154, 0.9)"
-      : "rgba(156, 39, 176, 0.5)"
+  const amounts = normalized.map((d) => d.amount);
+  const maxAmount = Math.max(...amounts);
+  const maxIdx = amounts.indexOf(maxAmount);
+
+  // 그라디언트 fill 적용
+  useEffect(() => {
+    const chart = chartRef.current;
+    if (!chart || !chart.chartArea) return;
+    const { ctx, chartArea: { top, bottom } } = chart;
+    const gradient = ctx.createLinearGradient(0, top, 0, bottom);
+    gradient.addColorStop(0, "rgba(156, 39, 176, 0.35)");
+    gradient.addColorStop(1, "rgba(156, 39, 176, 0.0)");
+    chart.data.datasets[0].backgroundColor = gradient;
+    chart.update("none");
+  }, [data]);
+
+  const pointColors = amounts.map((_, i) => {
+    if (i === maxIdx && maxAmount > 0) return "#6a1b9a";
+    return "transparent";
+  });
+  const pointRadius = amounts.map((_, i) =>
+    i === maxIdx && maxAmount > 0 ? 5 : 0
   );
-  const hoverColors = normalized.map((_, i) =>
-    i === CURRENT_HOUR
-      ? "rgba(106, 27, 154, 1)"
-      : "rgba(156, 39, 176, 0.75)"
-  );
+  const pointHoverRadius = amounts.map(() => 5);
 
   const chartData = {
     labels: normalized.map((d) => d.hour),
     datasets: [
       {
-        data: normalized.map((d) => d.amount),
-        backgroundColor: backgroundColors,
-        hoverBackgroundColor: hoverColors,
-        borderRadius: 4,
-        borderSkipped: false as const,
-        barPercentage: 0.7,
-        categoryPercentage: 0.85,
+        data: amounts,
+        borderColor: "rgba(156, 39, 176, 0.85)",
+        borderWidth: 2.5,
+        backgroundColor: "rgba(156, 39, 176, 0.15)", // 초기값 — useEffect에서 그라디언트로 교체됨
+        fill: true,
+        tension: 0.4,
+        pointBackgroundColor: pointColors,
+        pointBorderColor: pointColors,
+        pointRadius,
+        pointHoverRadius,
+        pointHoverBackgroundColor: "#9c27b0",
       },
     ],
   };
 
-  const options: ChartOptions<"bar"> = {
+  const options: ChartOptions<"line"> = {
     responsive: true,
     maintainAspectRatio: false,
     animation: { duration: 700, easing: "easeOutQuart" },
     plugins: {
       legend: { display: false },
       tooltip: {
+        ...TOOLTIP_STYLE,
         callbacks: {
-          label: (ctx) => ` ${ctx.parsed.y.toLocaleString()}원`,
+          title: (items) => {
+            const hour = Number(items[0].label.replace("시", ""));
+            const isCurrentHour = hour === CURRENT_HOUR;
+            return `${items[0].label}${isCurrentHour ? " (현재)" : ""}`;
+          },
+          label: (ctx) =>
+            ctx.parsed.y === 0
+              ? " 지출 없음"
+              : ` ₩${ctx.parsed.y.toLocaleString()}`,
         },
-        backgroundColor: "rgba(255,255,255,0.95)",
-        titleColor: "#333",
-        bodyColor: "#555",
-        borderColor: "#e0e0e0",
-        borderWidth: 1,
-        padding: 10,
-        cornerRadius: 8,
       },
     },
     scales: {
@@ -91,11 +127,15 @@ function HourlyExpenseChart({ data }: Props) {
         },
       },
     },
+    interaction: {
+      mode: "index",
+      intersect: false,
+    },
   };
 
   return (
-    <Box sx={{ width: "100%", height: 260 }}>
-      <Bar data={chartData} options={options} />
+    <Box sx={{ width: "100%", height: 255 }}>
+      <Line ref={chartRef} data={chartData} options={options} />
     </Box>
   );
 }
