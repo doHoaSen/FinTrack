@@ -14,7 +14,10 @@ import TrendingDownIcon from "@mui/icons-material/TrendingDown";
 import TrendingFlatIcon from "@mui/icons-material/TrendingFlat";
 import BoltIcon from "@mui/icons-material/Bolt";
 import WarningAmberIcon from "@mui/icons-material/WarningAmber";
-import { PieChart, Pie, Cell, Tooltip, ResponsiveContainer, Legend } from "recharts";
+import { Chart as ChartJS, ArcElement, Tooltip as ChartTooltip, Legend as ChartLegend } from "chart.js";
+import { Doughnut } from "react-chartjs-2";
+
+ChartJS.register(ArcElement, ChartTooltip, ChartLegend);
 import { getDashboardApi } from "../features/dashboard/api";
 import type {
   FeedbackResponse,
@@ -274,23 +277,37 @@ function AnalyticsPage() {
                   {fb.fixedVsVariable.message}
                 </Typography>
                 <Box sx={{ width: "100%", height: 220 }}>
-                  <ResponsiveContainer>
-                    <PieChart>
-                      <Pie
-                        data={fixedVarData}
-                        dataKey="value"
-                        nameKey="name"
-                        innerRadius={55}
-                        outerRadius={85}
-                        paddingAngle={3}
-                      >
-                        <Cell fill="#1976d2" />
-                        <Cell fill="#ed6c02" />
-                      </Pie>
-                      <Tooltip formatter={(v: number) => `₩${v.toLocaleString()}`} />
-                      <Legend />
-                    </PieChart>
-                  </ResponsiveContainer>
+                  <Doughnut
+                    data={{
+                      labels: fixedVarData.map((d) => d.name),
+                      datasets: [{
+                        data: fixedVarData.map((d) => d.value),
+                        backgroundColor: ["rgba(25,118,210,0.85)", "rgba(237,108,2,0.85)"],
+                        hoverBackgroundColor: ["#1976d2", "#ed6c02"],
+                        borderWidth: 0,
+                        hoverOffset: 6,
+                      }],
+                    }}
+                    options={{
+                      responsive: true,
+                      maintainAspectRatio: false,
+                      animation: { duration: 700, easing: "easeOutQuart" },
+                      cutout: "65%",
+                      plugins: {
+                        legend: { position: "bottom", labels: { padding: 16, font: { size: 12 } } },
+                        tooltip: {
+                          callbacks: { label: (ctx) => ` ₩${ctx.parsed.toLocaleString()}` },
+                          backgroundColor: "rgba(255,255,255,0.95)",
+                          titleColor: "#333",
+                          bodyColor: "#555",
+                          borderColor: "#e0e0e0",
+                          borderWidth: 1,
+                          padding: 10,
+                          cornerRadius: 8,
+                        },
+                      },
+                    }}
+                  />
                 </Box>
                 <Box display="flex" justifyContent="space-around" textAlign="center" mt={1}>
                   <Box>
