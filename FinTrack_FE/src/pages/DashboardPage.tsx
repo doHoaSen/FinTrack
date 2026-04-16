@@ -50,6 +50,10 @@ function DashboardPage() {
   const handleDelete = async (id: number) => {
     const target = recentExpenses.find(e => e.id === id);
 
+    // 롤백용 스냅샷
+    const previousExpenses = recentExpenses;
+    const previousTotal = monthlyTotal;
+
     // optimistic update
     setRecentExpenses(prev => prev.filter(e => e.id !== id));
 
@@ -66,12 +70,18 @@ function DashboardPage() {
       }
     }
 
-    // 서버 삭제
-    await deleteExpense(id);
+    try {
+      // 서버 삭제
+      await deleteExpense(id);
 
-    // 서버 재동기화
-    fetchDashboardData();
-    fetchRecent();
+      // 서버 재동기화
+      fetchDashboardData();
+      fetchRecent();
+    } catch {
+      // 서버 삭제 실패 시 롤백
+      setRecentExpenses(previousExpenses);
+      setMonthlyTotal(previousTotal);
+    }
   };
 
 
