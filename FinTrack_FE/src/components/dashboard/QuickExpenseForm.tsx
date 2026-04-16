@@ -66,10 +66,21 @@ function QuickExpenseForm({
     const updated = await updateExpenseApi(initialExpense.id, payload);
     onSuccess?.(updated);
   } else {
-    const created = await createExpenseApi(payload);
+    const createdId = await createExpenseApi(payload);
 
-    // optimistic update용으로 부모에 전달
-    onSuccess?.(created);
+    // 폼 데이터로 Expense 객체 구성 (optimistic update용)
+    const selectedCategory = categories.find((c) => c.id === categoryId);
+    const newExpense: Expense = {
+      id: createdId,
+      amount: Number(amount),
+      categoryId: categoryId as number,
+      categoryName: selectedCategory?.name ?? "",
+      categoryType: selectedCategory?.type ?? null,
+      expenseAt: dateTime.format("YYYY-MM-DDTHH:mm"),
+      memo: memo || undefined,
+    };
+
+    onSuccess?.(newExpense);
 
     // ✅ 폼 초기화
     setAmount("");

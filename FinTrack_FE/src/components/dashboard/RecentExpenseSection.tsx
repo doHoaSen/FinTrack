@@ -73,7 +73,10 @@ function formatExpenseAt(expenseAt: string | null): string {
   if (isSameDay(date, now)) return `오늘 ${hhmm}`;
   if (isSameDay(date, yesterday)) return `어제 ${hhmm}`;
 
-  const diffDays = Math.floor((now.getTime() - date.getTime()) / (1000 * 60 * 60 * 24));
+  // 시간이 아닌 캘린더 날짜 기준으로 차이 계산 (밀리초 오차 방지)
+  const nowDate = new Date(now.getFullYear(), now.getMonth(), now.getDate());
+  const expDate = new Date(date.getFullYear(), date.getMonth(), date.getDate());
+  const diffDays = Math.round((nowDate.getTime() - expDate.getTime()) / (1000 * 60 * 60 * 24));
   if (diffDays <= 6) return `${diffDays}일 전 ${hhmm}`;
 
   const month = date.getMonth() + 1;
