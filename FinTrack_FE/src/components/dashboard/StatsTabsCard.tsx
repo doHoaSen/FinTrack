@@ -63,7 +63,7 @@ function StatsTabsCard({ weekdayStats, hourlyStats, categoryStats, monthlyStats,
   }, [tab, weekdayStats, hourlyStats, monthlyStats, categoryStats, monthlyTotal]);
 
   return (
-    <Card sx={{ height: "100%" }}>
+    <Card sx={{ height: "100%", borderRadius: 3 }}>
       <CardContent sx={{ p: 3 }}>
         <Typography variant="subtitle1" fontWeight={600} color="text.secondary" mb={2}>
           이번 달 소비 패턴

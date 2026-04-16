@@ -156,7 +156,7 @@ function DashboardPage() {
 
       {/* A + B */}
       <Grid container spacing={2}>
-        <Grid size={{ xs: 12, md: 6 }}>
+        <Grid size={{ xs: 12, md: 7 }}>
           <SummarySection
             monthlyTotal={monthlyTotal}
             target={target}
@@ -164,7 +164,7 @@ function DashboardPage() {
           />
         </Grid>
 
-        <Grid size={{ xs: 12, md: 6 }}>
+        <Grid size={{ xs: 12, md: 5 }}>
           <QuickExpenseForm
             onSuccess={async (createdExpense?: Expense) => {
               // 1️⃣ optimistic update

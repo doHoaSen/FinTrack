@@ -98,7 +98,7 @@ function RecentExpenseSection({ expenses, onDeleteExpense, onEditExpense, onMore
   const displayed = expenses.slice(0, MAX_DISPLAY);
 
   return (
-    <Card sx={{ height: "100%", display: "flex", flexDirection: "column" }}>
+    <Card sx={{ height: "100%", display: "flex", flexDirection: "column", borderRadius: 3,}}>
       <CardContent sx={{ p: 3, flex: 1, display: "flex", flexDirection: "column", overflow: "hidden" }}>
         {/* 헤더 */}
         <Box display="flex" alignItems="center" justifyContent="space-between" mb={2} flexShrink={0}>

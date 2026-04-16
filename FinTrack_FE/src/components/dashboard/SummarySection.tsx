@@ -58,7 +58,7 @@ function SummarySection({ monthlyTotal, target, onSetTarget }: Props) {
   const spendingColor = hasTarget ? getSpendingColor(rawRatio) : "text.primary";
 
   return (
-    <Card sx={{ height: "100%", borderLeft: 4, borderColor }}>
+    <Card sx={{ height: "100%", borderRadius: 3, borderLeft: 4, borderColor }}>
       <CardContent
         sx={{
           p: 3,
