@@ -40,6 +40,7 @@ import { getExpenseApi } from "../../features/expense/api";
 import { useCategoryStore } from "../../store/categoryStore";
 import CategoryEditDialog from "./CategoryEditDialog";
 import CategoryDeleteDialog from "./CategoryDeleteDialog";
+import CategoryDetailDialog from "./CategoryDetailDialog";
 import type { Category } from "../../features/category/type";
 
 type IconMeta = { icon: SvgIconComponent; color: string; bg: string };
@@ -85,6 +86,7 @@ function CategoryManagePage() {
 
   const [editTarget, setEditTarget] = useState<Category | null>(null);
   const [deleteTarget, setDeleteTarget] = useState<Category | null>(null);
+  const [detailTarget, setDetailTarget] = useState<Category | null>(null);
 
   const fetchCategories = async () => {
     const data = await getCategoriesApi();
@@ -284,10 +286,12 @@ function CategoryManagePage() {
                     border: "1px solid",
                     borderColor: "divider",
                     borderRadius: 3,
+                    cursor: "pointer",
                     transition: "box-shadow 0.15s",
                     "&:hover": { boxShadow: "0 2px 12px rgba(0,0,0,0.07)" },
                     "&:hover .cat-actions": { opacity: 1 },
                   }}
+                  onClick={() => setDetailTarget(c)}
                 >
                   <CardContent sx={{ py: 1.75, px: 2.5, "&:last-child": { pb: 1.75 } }}>
                     <Box display="flex" alignItems="center" gap={2}>
@@ -324,10 +328,18 @@ function CategoryManagePage() {
                         gap={0.5}
                         sx={{ opacity: 0, transition: "opacity 0.15s", flexShrink: 0 }}
                       >
-                        <IconButton size="small" sx={{ color: "text.disabled" }} onClick={() => setEditTarget(c)}>
+                        <IconButton
+                          size="small"
+                          sx={{ color: "text.disabled" }}
+                          onClick={(e) => { e.stopPropagation(); setEditTarget(c); }}
+                        >
                           <EditOutlinedIcon fontSize="small" />
                         </IconButton>
-                        <IconButton size="small" sx={{ color: "text.disabled" }} onClick={() => setDeleteTarget(c)}>
+                        <IconButton
+                          size="small"
+                          sx={{ color: "text.disabled" }}
+                          onClick={(e) => { e.stopPropagation(); setDeleteTarget(c); }}
+                        >
                           <DeleteOutlineIcon fontSize="small" />
                         </IconButton>
                       </Box>
@@ -382,6 +394,16 @@ function CategoryManagePage() {
           </Button>
         </DialogContent>
       </Dialog>
+
+      {detailTarget && (
+        <CategoryDetailDialog
+          category={detailTarget}
+          meta={getIconMeta(detailTarget.name)}
+          onClose={() => setDetailTarget(null)}
+          onEdit={() => { setDetailTarget(null); setEditTarget(detailTarget); }}
+          onDelete={() => { setDetailTarget(null); setDeleteTarget(detailTarget); }}
+        />
+      )}
 
       {editTarget && (
         <CategoryEditDialog
