@@ -288,7 +288,7 @@ function CategoryDetailDialog({ category, meta, onClose, onEdit, onDelete }: Pro
             <Grid size={{ xs: 12, md: 5 }}>
               <Box
                 sx={{
-                  background: "linear-gradient(135deg, #3B5BDB 0%, #4C6EF5 100%)",
+                  background: `linear-gradient(135deg, ${meta.color} 0%, ${meta.color}cc 100%)`,
                   borderRadius: 3,
                   p: 2.5,
                   height: 220,
