@@ -4,11 +4,11 @@ import RecentExpenseSection from "../components/dashboard/RecentExpenseSection";
 import FeedbackSection from "../components/dashboard/FeedbackSection";
 import TargetSettingDialog from "../components/dashboard/TargetSettingDialog";
 
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { getDashboardApi } from "../features/dashboard/api";
 import type { MonthlyStat, TargetResponse, FeedbackResponse } from "../features/dashboard/api";
-import { Grid, Box, Typography } from "@mui/material";
+import { Grid, Box, Typography, Snackbar, Button } from "@mui/material";
 import { getRecentExpensesApi } from "../features/expense/api";
 import type { Expense } from "../store/expenseStore";
 import { useExpenseStore } from "../store/expenseStore";
@@ -27,6 +27,21 @@ function DashboardPage() {
 
   const [error, setError] = useState("");
   const deleteExpense = useExpenseStore((s) => s.deleteExpense);
+
+  type PendingDelete = {
+    expense: Expense;
+    snapshotExpenses: Expense[];
+    snapshotTotal: number;
+  };
+  const [pendingDelete, setPendingDelete] = useState<PendingDelete | null>(null);
+  const [undoOpen, setUndoOpen] = useState(false);
+  const deleteTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+
+  useEffect(() => {
+    return () => {
+      if (deleteTimerRef.current) clearTimeout(deleteTimerRef.current);
+    };
+  }, []);
 
   const [monthlyTotal, setMonthlyTotal] = useState(0);
 
@@ -47,41 +62,58 @@ function DashboardPage() {
     setRecentExpenses(filtered);
   };
 
-  const handleDelete = async (id: number) => {
-    const target = recentExpenses.find(e => e.id === id);
+  const handleDelete = (id: number) => {
+    const target = recentExpenses.find((e) => e.id === id);
+    if (!target) return;
 
-    // 롤백용 스냅샷
-    const previousExpenses = recentExpenses;
-    const previousTotal = monthlyTotal;
+    // 이미 대기 중인 삭제가 있으면 즉시 확정
+    if (deleteTimerRef.current) {
+      clearTimeout(deleteTimerRef.current);
+      deleteTimerRef.current = null;
+      if (pendingDelete) deleteExpense(pendingDelete.expense.id);
+    }
 
-    // optimistic update
-    setRecentExpenses(prev => prev.filter(e => e.id !== id));
+    const snapshotExpenses = [...recentExpenses];
+    const snapshotTotal = monthlyTotal;
 
-    if (target?.expenseAt) {
+    // Optimistic Update
+    setRecentExpenses((prev) => prev.filter((e) => e.id !== id));
+    if (target.expenseAt) {
       const expenseDate = new Date(target.expenseAt);
       const now = new Date();
-
       const isThisMonth =
         expenseDate.getFullYear() === now.getFullYear() &&
         expenseDate.getMonth() === now.getMonth();
+      if (isThisMonth) setMonthlyTotal((prev) => prev - target.amount);
+    }
 
-      if (isThisMonth) {
-        setMonthlyTotal(prev => prev - target.amount);
+    setPendingDelete({ expense: target, snapshotExpenses, snapshotTotal });
+    setUndoOpen(true);
+
+    deleteTimerRef.current = setTimeout(async () => {
+      try {
+        await deleteExpense(id);
+        fetchDashboardData();
+        fetchRecent();
+      } catch {
+        setRecentExpenses(snapshotExpenses);
+        setMonthlyTotal(snapshotTotal);
+      } finally {
+        setPendingDelete(null);
+        setUndoOpen(false);
+        deleteTimerRef.current = null;
       }
-    }
+    }, 5000);
+  };
 
-    try {
-      // 서버 삭제
-      await deleteExpense(id);
-
-      // 서버 재동기화
-      fetchDashboardData();
-      fetchRecent();
-    } catch {
-      // 서버 삭제 실패 시 롤백
-      setRecentExpenses(previousExpenses);
-      setMonthlyTotal(previousTotal);
-    }
+  const handleUndo = () => {
+    if (!pendingDelete || !deleteTimerRef.current) return;
+    clearTimeout(deleteTimerRef.current);
+    deleteTimerRef.current = null;
+    setRecentExpenses(pendingDelete.snapshotExpenses);
+    setMonthlyTotal(pendingDelete.snapshotTotal);
+    setPendingDelete(null);
+    setUndoOpen(false);
   };
 
 
@@ -273,6 +305,18 @@ function DashboardPage() {
 
           />
         )}
+
+      {/* 삭제 실행 취소 Snackbar */}
+      <Snackbar
+        open={undoOpen}
+        anchorOrigin={{ vertical: "bottom", horizontal: "center" }}
+        message={`지출이 삭제됩니다`}
+        action={
+          <Button color="warning" size="small" sx={{ fontWeight: 700 }} onClick={handleUndo}>
+            실행 취소
+          </Button>
+        }
+      />
 
       <TargetSettingDialog
         open={targetDialogOpen}

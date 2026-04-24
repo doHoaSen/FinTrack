@@ -97,13 +97,27 @@ function Sidebar({ open }: Props) {
         <Divider />
         <List sx={{ px: 1.5, py: 1 }}>
           <ListItemButton
-            onClick={() => navigate("/settings")}
-            sx={{ borderRadius: 2, mb: 0.5, color: "text.secondary" }}
+            onClick={() => navigate("/settings/categories")}
+            sx={{
+              borderRadius: 2,
+              mb: 0.5,
+              bgcolor: location.pathname.startsWith("/settings") ? "rgba(25, 118, 210, 0.08)" : "transparent",
+              color: location.pathname.startsWith("/settings") ? "primary.main" : "text.secondary",
+              "& .MuiListItemIcon-root": {
+                color: location.pathname.startsWith("/settings") ? "primary.main" : "text.secondary",
+              },
+              "&:hover": {
+                bgcolor: location.pathname.startsWith("/settings") ? "rgba(25, 118, 210, 0.12)" : "action.hover",
+              },
+            }}
           >
-            <ListItemIcon sx={{ minWidth: 36, color: "text.secondary" }}>
+            <ListItemIcon sx={{ minWidth: 36 }}>
               <SettingsIcon fontSize="small" />
             </ListItemIcon>
-            <ListItemText primary="설정" slotProps={{ primary: { fontSize: 14 } }} />
+            <ListItemText
+              primary="설정"
+              slotProps={{ primary: { fontSize: 14, fontWeight: location.pathname.startsWith("/settings") ? 600 : 400 } }}
+            />
           </ListItemButton>
 
           <ListItemButton

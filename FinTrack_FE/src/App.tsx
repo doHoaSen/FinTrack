@@ -39,6 +39,7 @@ function App() {
       >
         <Route path="/dashboard" element={<DashboardPage />} />
         <Route path="/settings" element={<SettingsPage />}>
+          <Route index element={<Navigate to="/settings/categories" replace />} />
           <Route path="categories" element={<CategoryManagePage />} />
         </Route>
         <Route path="/expenses" element={<ExpensesPage />} />
