@@ -20,6 +20,7 @@ import {
 } from "@mui/material";
 import EditIcon from "@mui/icons-material/Edit";
 import DeleteIcon from "@mui/icons-material/Delete";
+import AddIcon from "@mui/icons-material/Add";
 import dayjs from "dayjs";
 import { useEffect, useState } from "react";
 
@@ -42,6 +43,7 @@ function ExpensesPage() {
 
   const [expenses, setExpenses] = useState<Expense[]>([]);
   const [editingExpense, setEditingExpense] = useState<Expense | null>(null);
+  const [addingExpense, setAddingExpense] = useState(false);
   const [totalPages, setTotalPages] = useState(0);
   const [totalElements, setTotalElements] = useState(0);
   const [page, setPage] = useState(0);
@@ -196,7 +198,7 @@ function ExpensesPage() {
         지출 내역
       </Typography>
       <Typography variant="body2" color="text.secondary" mb={2.5}>
-        
+
       </Typography>
 
       {/* 필터 한 줄 */}
@@ -269,6 +271,18 @@ function ExpensesPage() {
           sx={{ borderRadius: 2, fontWeight: 600, height: 40, px: 2.5 }}
         >
           필터 적용
+        </Button>
+
+        <Box sx={{ flex: 1 }} />
+
+        <Button
+          variant="contained"
+          startIcon={<AddIcon />}
+          onClick={() => setAddingExpense(true)}
+          disableElevation
+          sx={{ borderRadius: 2, fontWeight: 600, height: 40 }}
+        >
+          지출 등록
         </Button>
       </Stack>
 
@@ -439,6 +453,19 @@ function ExpensesPage() {
           {getTargetCardMessage()}
         </Typography>
       </Box>
+
+      {/* 등록 모달 */}
+      {addingExpense && (
+        <QuickExpenseForm
+          mode="create"
+          onClose={() => setAddingExpense(false)}
+          onSuccess={() => {
+            setAddingExpense(false);
+            fetchExpenses();
+            fetchMonthlyTotal();
+          }}
+        />
+      )}
 
       {/* 수정 모달 */}
       {editingExpense && (

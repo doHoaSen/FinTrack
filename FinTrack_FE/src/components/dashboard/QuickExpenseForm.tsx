@@ -253,7 +253,7 @@ function QuickExpenseForm({
     </Box>
   );
 
-  if (isEdit) {
+  if (isEdit || onClose) {
     return (
       <Dialog open onClose={onClose} maxWidth="sm" fullWidth>
         <DialogTitle sx={{ pb: 0 }} />
