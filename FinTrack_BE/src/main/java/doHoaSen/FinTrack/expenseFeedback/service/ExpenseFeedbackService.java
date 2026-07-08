@@ -77,7 +77,8 @@ public class ExpenseFeedbackService {
             return FeedbackResponse.MonthlyTrend.builder()
                     .status("first")
                     .currentMonth(current)
-                    .message("첫 달 소비 데이터가 충분하지 않아 비교 분석은 제공되지 않습니다.")
+                    .lastMonth(last)
+                    .message("지난달 지출 데이터가 없어 비교 분석을 제공할 수 없습니다.")
                     .build();
         }
 
@@ -348,6 +349,7 @@ public class ExpenseFeedbackService {
         if (lastWeek == 0) {
             return FeedbackResponse.WeekCompare.builder()
                     .thisWeek(thisWeek)
+                    .lastWeek(lastWeek)
                     .message("지난주 데이터가 없어 비교가 어렵습니다.")
                     .build();
         }

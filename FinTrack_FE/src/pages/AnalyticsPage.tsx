@@ -174,32 +174,60 @@ function AnalyticsPage() {
       : [];
 
   // 상단 stat 카드 데이터
+  // percentDiff/diffPercent는 비교 대상(전월·전주)이 0원이라 나눗셈이 불가능할 때 백엔드에서 null로 내려온다.
+  // 이 경우 0%(변화 없음)로 오인되지 않도록, 뺄셈은 가능하므로 절대 금액 차이로 대체해서 보여준다.
   const monthlyTrendCard = fb?.monthlyTrend
-    ? {
-        label: "전월 대비",
-        value: `${fb.monthlyTrend.percentDiff > 0 ? "+" : ""}${(fb.monthlyTrend.percentDiff ?? 0).toFixed(1)}%`,
-        sub: `이번 달 ₩${(fb.monthlyTrend.currentMonth ?? 0).toLocaleString()} / 전월 ₩${(fb.monthlyTrend.lastMonth ?? 0).toLocaleString()}`,
-        trend: (fb.monthlyTrend.status === "increase" ? "up" : fb.monthlyTrend.status === "decrease" ? "down" : "flat") as "up" | "down" | "flat",
-        color: fb.monthlyTrend.status === "increase" ? "error.main" : fb.monthlyTrend.status === "decrease" ? "success.main" : "text.primary",
-      }
+    ? fb.monthlyTrend.percentDiff != null
+      ? {
+          label: "전월 대비",
+          value: `${fb.monthlyTrend.percentDiff > 0 ? "+" : ""}${fb.monthlyTrend.percentDiff.toFixed(1)}%`,
+          sub: `이번 달 ₩${(fb.monthlyTrend.currentMonth ?? 0).toLocaleString()} / 전월 ₩${(fb.monthlyTrend.lastMonth ?? 0).toLocaleString()}`,
+          trend: (fb.monthlyTrend.status === "increase" ? "up" : fb.monthlyTrend.status === "decrease" ? "down" : "flat") as "up" | "down" | "flat",
+          color: fb.monthlyTrend.status === "increase" ? "error.main" : fb.monthlyTrend.status === "decrease" ? "success.main" : "text.primary",
+        }
+      : (() => {
+          const diff = (fb.monthlyTrend.currentMonth ?? 0) - (fb.monthlyTrend.lastMonth ?? 0);
+          return {
+            label: "전월 대비",
+            value: `${diff > 0 ? "+" : diff < 0 ? "-" : ""}₩${Math.abs(diff).toLocaleString()}`,
+            sub: fb.monthlyTrend.message,
+            trend: (diff > 0 ? "up" : diff < 0 ? "down" : "flat") as "up" | "down" | "flat",
+            color: diff > 0 ? "error.main" : diff < 0 ? "success.main" : "text.primary",
+          };
+        })()
     : null;
 
   const weekCompareCard = fb?.weekCompare
-    ? {
-        label: "전주 대비",
-        value: `${fb.weekCompare.diffPercent > 0 ? "+" : ""}${(fb.weekCompare.diffPercent ?? 0).toFixed(1)}%`,
-        sub: `이번 주 ₩${(fb.weekCompare.thisWeek ?? 0).toLocaleString()} / 전주 ₩${(fb.weekCompare.lastWeek ?? 0).toLocaleString()}`,
-        trend: (fb.weekCompare.diffPercent > 0 ? "up" : fb.weekCompare.diffPercent < 0 ? "down" : "flat") as "up" | "down" | "flat",
-        color: fb.weekCompare.diffPercent > 0 ? "error.main" : "success.main",
-      }
+    ? fb.weekCompare.diffPercent != null
+      ? {
+          label: "전주 대비",
+          value: `${fb.weekCompare.diffPercent > 0 ? "+" : ""}${fb.weekCompare.diffPercent.toFixed(1)}%`,
+          sub: `이번 주 ₩${(fb.weekCompare.thisWeek ?? 0).toLocaleString()} / 전주 ₩${(fb.weekCompare.lastWeek ?? 0).toLocaleString()}`,
+          trend: (fb.weekCompare.diffPercent > 0 ? "up" : fb.weekCompare.diffPercent < 0 ? "down" : "flat") as "up" | "down" | "flat",
+          color: fb.weekCompare.diffPercent > 0 ? "error.main" : "success.main",
+        }
+      : (() => {
+          const diff = (fb.weekCompare.thisWeek ?? 0) - (fb.weekCompare.lastWeek ?? 0);
+          return {
+            label: "전주 대비",
+            value: `${diff > 0 ? "+" : diff < 0 ? "-" : ""}₩${Math.abs(diff).toLocaleString()}`,
+            sub: fb.weekCompare.message,
+            trend: (diff > 0 ? "up" : diff < 0 ? "down" : "flat") as "up" | "down" | "flat",
+            color: diff > 0 ? "error.main" : diff < 0 ? "success.main" : "text.primary",
+          };
+        })()
     : null;
 
   const dailyAvgCard = fb?.dailyAverageTrend
     ? {
         label: "일 평균 소비",
         value: `₩${(fb.dailyAverageTrend.currentAvg ?? 0).toLocaleString()}`,
-        sub: `전월 일 평균 ₩${(fb.dailyAverageTrend.lastMonthAvg ?? 0).toLocaleString()}`,
-        trend: ((fb.dailyAverageTrend.diff ?? 0) > 0 ? "up" : (fb.dailyAverageTrend.diff ?? 0) < 0 ? "down" : "flat") as "up" | "down" | "flat",
+        sub: fb.dailyAverageTrend.diff != null
+          ? `전월 일 평균 ₩${(fb.dailyAverageTrend.lastMonthAvg ?? 0).toLocaleString()}`
+          : fb.dailyAverageTrend.message,
+        trend: fb.dailyAverageTrend.diff == null
+          ? undefined
+          : ((fb.dailyAverageTrend.diff > 0 ? "up" : fb.dailyAverageTrend.diff < 0 ? "down" : "flat") as "up" | "down" | "flat"),
       }
     : null;
 

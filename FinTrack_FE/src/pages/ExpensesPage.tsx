@@ -17,12 +17,13 @@ import {
   InputLabel,
   Paper,
   Stack,
+  Snackbar,
 } from "@mui/material";
 import EditIcon from "@mui/icons-material/Edit";
 import DeleteIcon from "@mui/icons-material/Delete";
 import AddIcon from "@mui/icons-material/Add";
 import dayjs from "dayjs";
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 
 import { getExpenseApi } from "../features/expense/api";
 import { getCategoriesApi } from "../features/category/api";
@@ -44,6 +45,15 @@ function ExpensesPage() {
   const [expenses, setExpenses] = useState<Expense[]>([]);
   const [editingExpense, setEditingExpense] = useState<Expense | null>(null);
   const [addingExpense, setAddingExpense] = useState(false);
+
+  type PendingDelete = {
+    expense: Expense;
+    snapshot: Expense[];
+    totalSnapshot: number;
+  };
+  const [pendingDelete, setPendingDelete] = useState<PendingDelete | null>(null);
+  const [undoOpen, setUndoOpen] = useState(false);
+  const deleteTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   const [totalPages, setTotalPages] = useState(0);
   const [totalElements, setTotalElements] = useState(0);
   const [page, setPage] = useState(0);
@@ -129,12 +139,58 @@ function ExpensesPage() {
     setPage(0);
   };
 
-  const handleDelete = async (id: number) => {
-    if (!confirm("정말 삭제하시겠습니까?")) return;
-    await deleteExpense(id);
-    fetchExpenses();
-    fetchMonthlyTotal();
+  const handleDelete = (id: number) => {
+    const target = expenses.find((e) => e.id === id);
+    if (!target) return;
+
+    // 이미 대기 중인 삭제가 있으면 즉시 확정
+    if (deleteTimerRef.current) {
+      clearTimeout(deleteTimerRef.current);
+      deleteTimerRef.current = null;
+      if (pendingDelete) deleteExpense(pendingDelete.expense.id);
+    }
+
+    const snapshot = [...expenses];
+    const totalSnapshot = totalElements;
+
+    // optimistic remove
+    setExpenses((prev) => prev.filter((e) => e.id !== id));
+    setTotalElements((prev) => prev - 1);
+
+    setPendingDelete({ expense: target, snapshot, totalSnapshot });
+    setUndoOpen(true);
+
+    deleteTimerRef.current = setTimeout(async () => {
+      try {
+        await deleteExpense(id);
+        fetchExpenses();
+        fetchMonthlyTotal();
+      } catch {
+        setExpenses(snapshot);
+        setTotalElements(totalSnapshot);
+      } finally {
+        setPendingDelete(null);
+        setUndoOpen(false);
+        deleteTimerRef.current = null;
+      }
+    }, 5000);
   };
+
+  const handleUndo = () => {
+    if (!pendingDelete || !deleteTimerRef.current) return;
+    clearTimeout(deleteTimerRef.current);
+    deleteTimerRef.current = null;
+    setExpenses(pendingDelete.snapshot);
+    setTotalElements(pendingDelete.totalSnapshot);
+    setPendingDelete(null);
+    setUndoOpen(false);
+  };
+
+  useEffect(() => {
+    return () => {
+      if (deleteTimerRef.current) clearTimeout(deleteTimerRef.current);
+    };
+  }, []);
 
   const currentYear = dayjs().year();
   const years =
@@ -453,6 +509,18 @@ function ExpensesPage() {
           {getTargetCardMessage()}
         </Typography>
       </Box>
+
+      {/* 삭제 실행 취소 Snackbar */}
+      <Snackbar
+        open={undoOpen}
+        anchorOrigin={{ vertical: "bottom", horizontal: "center" }}
+        message={`지출이 삭제됩니다`}
+        action={
+          <Button color="warning" size="small" sx={{ fontWeight: 700 }} onClick={handleUndo}>
+            실행 취소
+          </Button>
+        }
+      />
 
       {/* 등록 모달 */}
       {addingExpense && (

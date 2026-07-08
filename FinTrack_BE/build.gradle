@@ -54,6 +54,11 @@ tasks.named('test') {
 	useJUnitPlatform()
 }
 
+bootRun {
+	// Windows에서 IPv6 wildcard bind 실패(WSAEADDRNOTAVAIL, "Bad address: listen") 방지
+	jvmArgs = ["-Djava.net.preferIPv4Stack=true"]
+}
+
 tasks.withType(JavaCompile) {
 	options.annotationProcessorPath = configurations.annotationProcessor
 }
