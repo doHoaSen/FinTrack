@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import {
   Box,
   Typography,
@@ -15,24 +15,33 @@ import { getDashboardApi } from "../features/dashboard/api";
 import type { TargetResponse, MonthlyStat } from "../features/dashboard/api";
 import TargetSettingDialog from "../components/dashboard/TargetSettingDialog";
 import MonthlyExpenseChart from "../components/dashboard/MonthlyExpenseChart";
+import { useCategoryStore } from "../store/categoryStore";
+import { getCategoryColor } from "../utils/categoryColor";
 
-type CategoryStat = { name: string; amount: number };
-
-const CATEGORY_COLORS = [
-  "#1976d2",
-  "#ed6c02",
-  "#9c27b0",
-  "#2e7d32",
-  "#d32f2f",
-  "#0288d1",
-];
+type CategoryStat = { id: number; name: string; amount: number };
 
 function BudgetPage() {
   const [target, setTarget] = useState<TargetResponse | null>(null);
   const [monthlyStats, setMonthlyStats] = useState<MonthlyStat[]>([]);
-  const [categoryStats, setCategoryStats] = useState<CategoryStat[]>([]);
+  const [categoryTotals, setCategoryTotals] = useState<Record<string, number>>({});
   const [dialogOpen, setDialogOpen] = useState(false);
   const [error, setError] = useState("");
+
+  const categories = useCategoryStore((s) => s.categories);
+  const fetchCategoryList = useCategoryStore((s) => s.fetchCategories);
+
+  // 카테고리 이름 -> id 매핑이 늦게 로드되어도(레이스 컨디션) 다시 계산되도록 useMemo로 파생
+  const categoryStats = useMemo<CategoryStat[]>(
+    () =>
+      Object.entries(categoryTotals)
+        .map(([name, amount]) => ({
+          id: categories.find((c) => c.name === name)?.id ?? -1,
+          name,
+          amount: Number(amount),
+        }))
+        .sort((a, b) => b.amount - a.amount),
+    [categoryTotals, categories]
+  );
 
   const fetchData = async () => {
     try {
@@ -42,18 +51,16 @@ function BudgetPage() {
       ]);
       setTarget(targetData);
       setMonthlyStats(dashboardData.monthlyStats);
-      if (dashboardData.categoryTotals) {
-        const sorted = Object.entries(dashboardData.categoryTotals)
-          .map(([name, amount]) => ({ name, amount: Number(amount) }))
-          .sort((a, b) => b.amount - a.amount);
-        setCategoryStats(sorted);
-      }
+      setCategoryTotals(dashboardData.categoryTotals ?? {});
     } catch {
       setError("데이터를 불러오지 못했습니다.");
     }
   };
 
-  useEffect(() => { fetchData(); }, []);
+  useEffect(() => {
+    fetchData();
+    fetchCategoryList();
+  }, []);
 
   const hasTarget = target?.exists && target.targetAmount != null;
   const targetAmount = target?.targetAmount ?? 0;
@@ -218,9 +225,9 @@ function BudgetPage() {
                 </Typography>
               ) : (
                 <Box display="flex" flexDirection="column" gap={1.5}>
-                  {categoryStats.map((cat, idx) => {
+                  {categoryStats.map((cat) => {
                     const pct = totalSpent > 0 ? (cat.amount / totalSpent) * 100 : 0;
-                    const color = CATEGORY_COLORS[idx % CATEGORY_COLORS.length];
+                    const color = getCategoryColor(cat.id);
                     return (
                       <Box key={cat.name}>
                         <Box display="flex" justifyContent="space-between" mb={0.5}>
