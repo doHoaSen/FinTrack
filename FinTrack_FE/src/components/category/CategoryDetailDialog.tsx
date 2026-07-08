@@ -35,6 +35,7 @@ import { getExpenseApi } from "../../features/expense/api";
 import type { Category } from "../../features/category/type";
 import type { Expense } from "../../store/expenseStore";
 import type { SvgIconComponent } from "@mui/icons-material";
+import CategoryColorPicker from "./CategoryColorPicker";
 
 ChartJS.register(CategoryScale, LinearScale, BarElement, Tooltip);
 
@@ -46,10 +47,13 @@ type Props = {
   onClose: () => void;
   onEdit: () => void;
   onDelete: () => void;
+  onColorChange?: () => void;
 };
 
-function CategoryDetailDialog({ category, meta, onClose, onEdit, onDelete }: Props) {
+function CategoryDetailDialog({ category, meta, onClose, onEdit, onDelete, onColorChange }: Props) {
   const Icon = meta.icon;
+  const [color, setColor] = useState(meta.color);
+  const bg = `${color}1a`;
 
   const [loading, setLoading] = useState(true);
   const [thisMonthExpenses, setThisMonthExpenses] = useState<Expense[]>([]);
@@ -129,7 +133,7 @@ function CategoryDetailDialog({ category, meta, onClose, onEdit, onDelete }: Pro
       {
         data: trendAmounts,
         backgroundColor: trendAmounts.map((_, i) =>
-          i === trendAmounts.length - 1 ? meta.color : `${meta.color}66`
+          i === trendAmounts.length - 1 ? color : `${color}66`
         ),
         borderRadius: 6,
         borderSkipped: false,
@@ -169,9 +173,21 @@ function CategoryDetailDialog({ category, meta, onClose, onEdit, onDelete }: Pro
         <Box sx={{ p: 3 }}>
           {/* 헤더 */}
           <Box display="flex" alignItems="center" gap={2} mb={3}>
-            <Avatar sx={{ width: 52, height: 52, bgcolor: meta.bg, flexShrink: 0 }}>
-              <Icon sx={{ fontSize: 26, color: meta.color }} />
-            </Avatar>
+            <Box position="relative" flexShrink={0}>
+              <Avatar sx={{ width: 52, height: 52, bgcolor: bg }}>
+                <Icon sx={{ fontSize: 26, color }} />
+              </Avatar>
+              <Box position="absolute" bottom={-2} right={-2}>
+                <CategoryColorPicker
+                  categoryId={category.id}
+                  color={color}
+                  onChange={(next) => {
+                    setColor(next);
+                    onColorChange?.();
+                  }}
+                />
+              </Box>
+            </Box>
 
             <Box flex={1}>
               <Box display="flex" alignItems="center" gap={1}>
@@ -288,7 +304,7 @@ function CategoryDetailDialog({ category, meta, onClose, onEdit, onDelete }: Pro
             <Grid size={{ xs: 12, md: 5 }}>
               <Box
                 sx={{
-                  background: `linear-gradient(135deg, ${meta.color} 0%, ${meta.color}cc 100%)`,
+                  background: `linear-gradient(135deg, ${color} 0%, ${color}cc 100%)`,
                   borderRadius: 3,
                   p: 2.5,
                   height: 220,

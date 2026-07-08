@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react";
+import { useEffect, useReducer, useState } from "react";
 import {
   Box,
   Typography,
@@ -38,6 +38,8 @@ import dayjs from "dayjs";
 import { getCategoriesApi } from "../../features/category/api";
 import { getExpenseApi } from "../../features/expense/api";
 import { useCategoryStore } from "../../store/categoryStore";
+import { getCategoryColor } from "../../utils/categoryColor";
+import CategoryColorPicker from "./CategoryColorPicker";
 import CategoryEditDialog from "./CategoryEditDialog";
 import CategoryDeleteDialog from "./CategoryDeleteDialog";
 import CategoryDetailDialog from "./CategoryDetailDialog";
@@ -45,25 +47,25 @@ import type { Category } from "../../features/category/type";
 
 type IconMeta = { icon: SvgIconComponent; color: string; bg: string };
 
-const ICON_MAP: { keywords: string[]; meta: IconMeta }[] = [
-  { keywords: ["식", "음식", "밥"], meta: { icon: RestaurantIcon, color: "#e65100", bg: "#fff3e0" } },
-  { keywords: ["주거", "통신", "월세", "관리비"], meta: { icon: HomeIcon, color: "#4e342e", bg: "#efebe9" } },
-  { keywords: ["교통", "차량", "자동차", "주유"], meta: { icon: DirectionsCarIcon, color: "#1565c0", bg: "#e3f2fd" } },
-  { keywords: ["문화", "여가", "영화", "취미"], meta: { icon: MovieIcon, color: "#00695c", bg: "#e0f2f1" } },
-  { keywords: ["의료", "건강", "병원", "약"], meta: { icon: LocalHospitalIcon, color: "#c62828", bg: "#ffebee" } },
-  { keywords: ["보험"], meta: { icon: SecurityIcon, color: "#37474f", bg: "#eceff1" } },
-  { keywords: ["쇼핑"], meta: { icon: ShoppingBagIcon, color: "#6a1b9a", bg: "#f3e5f5" } },
-  { keywords: ["교육", "학습"], meta: { icon: SchoolIcon, color: "#283593", bg: "#e8eaf6" } },
-  { keywords: ["카페", "커피"], meta: { icon: LocalCafeIcon, color: "#f57f17", bg: "#fffde7" } },
+// 아이콘 모양은 이름 키워드로 매칭, 색상은 카테고리별로 커스터마이징 가능 (getCategoryColor)
+const ICON_SHAPE_MAP: { keywords: string[]; icon: SvgIconComponent }[] = [
+  { keywords: ["식", "음식", "밥"], icon: RestaurantIcon },
+  { keywords: ["주거", "통신", "월세", "관리비"], icon: HomeIcon },
+  { keywords: ["교통", "차량", "자동차", "주유"], icon: DirectionsCarIcon },
+  { keywords: ["문화", "여가", "영화", "취미"], icon: MovieIcon },
+  { keywords: ["의료", "건강", "병원", "약"], icon: LocalHospitalIcon },
+  { keywords: ["보험"], icon: SecurityIcon },
+  { keywords: ["쇼핑"], icon: ShoppingBagIcon },
+  { keywords: ["교육", "학습"], icon: SchoolIcon },
+  { keywords: ["카페", "커피"], icon: LocalCafeIcon },
 ];
 
-const DEFAULT_META: IconMeta = { icon: CategoryIcon, color: "#546e7a", bg: "#eceff1" };
-
-function getIconMeta(name: string): IconMeta {
-  for (const { keywords, meta } of ICON_MAP) {
-    if (keywords.some((k) => name.includes(k))) return meta;
-  }
-  return DEFAULT_META;
+function getIconMeta(category: Category): IconMeta {
+  const icon =
+    ICON_SHAPE_MAP.find(({ keywords }) => keywords.some((k) => category.name.includes(k)))?.icon ??
+    CategoryIcon;
+  const color = getCategoryColor(category.id);
+  return { icon, color, bg: `${color}1a` };
 }
 
 const FILTER_OPTIONS = [
@@ -87,6 +89,9 @@ function CategoryManagePage() {
   const [editTarget, setEditTarget] = useState<Category | null>(null);
   const [deleteTarget, setDeleteTarget] = useState<Category | null>(null);
   const [detailTarget, setDetailTarget] = useState<Category | null>(null);
+
+  // 색상 변경 시 localStorage에서 다시 읽도록 강제 리렌더
+  const [, bumpColor] = useReducer((c: number) => c + 1, 0);
 
   const fetchCategories = async () => {
     const data = await getCategoriesApi();
@@ -274,7 +279,7 @@ function CategoryManagePage() {
 
           <Stack spacing={1.5}>
             {filtered.map((c) => {
-              const meta = getIconMeta(c.name);
+              const meta = getIconMeta(c);
               const Icon = meta.icon;
               const count = countMap[c.id] ?? 0;
 
@@ -325,9 +330,15 @@ function CategoryManagePage() {
                       <Box
                         className="cat-actions"
                         display="flex"
-                        gap={0.5}
+                        alignItems="center"
+                        gap={1}
                         sx={{ opacity: 0, transition: "opacity 0.15s", flexShrink: 0 }}
                       >
+                        <CategoryColorPicker
+                          categoryId={c.id}
+                          color={meta.color}
+                          onChange={() => bumpColor()}
+                        />
                         <IconButton
                           size="small"
                           sx={{ color: "text.disabled" }}
@@ -398,7 +409,8 @@ function CategoryManagePage() {
       {detailTarget && (
         <CategoryDetailDialog
           category={detailTarget}
-          meta={getIconMeta(detailTarget.name)}
+          meta={getIconMeta(detailTarget)}
+          onColorChange={() => bumpColor()}
           onClose={() => setDetailTarget(null)}
           onEdit={() => { setDetailTarget(null); setEditTarget(detailTarget); }}
           onDelete={() => { setDetailTarget(null); setDeleteTarget(detailTarget); }}
