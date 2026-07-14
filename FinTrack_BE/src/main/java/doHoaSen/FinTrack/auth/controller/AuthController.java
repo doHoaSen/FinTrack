@@ -23,7 +23,7 @@ import org.springframework.web.bind.annotation.RestController;
 @RestController
 @RequestMapping("/api/auth")
 @RequiredArgsConstructor
-public class AuthController {
+public class AuthController implements AuthControllerSpec {
 
     private final AuthService authService;
 
@@ -31,6 +31,7 @@ public class AuthController {
     private boolean cookieSecure;
 
     // 로그인
+    @Override
     @PostMapping("/login")
     public ResponseEntity<ApiResponse<UserInfoResponse>> login(
             @Valid @RequestBody LoginRequest request,
@@ -52,6 +53,7 @@ public class AuthController {
     }
 
     // 로그아웃
+    @Override
     @PostMapping("/logout")
     public ResponseEntity<ApiResponse<Void>> logout(HttpServletResponse response) {
             response.addHeader(HttpHeaders.SET_COOKIE,
@@ -61,6 +63,7 @@ public class AuthController {
             return ResponseEntity.ok(ApiResponse.success("로그아웃 완료", null));
     }
 
+    @Override
     @PostMapping("/refresh")
     public ResponseEntity<ApiResponse<Void>> refresh(
             HttpServletRequest request,

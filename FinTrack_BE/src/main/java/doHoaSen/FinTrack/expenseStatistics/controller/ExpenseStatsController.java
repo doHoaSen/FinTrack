@@ -20,11 +20,12 @@ import java.util.List;
 @RestController
 @RequiredArgsConstructor
 @RequestMapping("/api/expenses/stats")
-public class ExpenseStatsController {
+public class ExpenseStatsController implements ExpenseStatsControllerSpec {
 
     final ExpenseStatsService expenseStatsService;
     final ExpenseQueryRepository expenseQueryRepository;
 
+    @Override
     @GetMapping("/monthly")
     public ApiResponse<List<MonthlyStatsDto>> monthly(
             @RequestParam int year,
@@ -36,6 +37,7 @@ public class ExpenseStatsController {
         );
     }
 
+    @Override
     @GetMapping("/weekday")
     public ApiResponse<List<WeekdayStatsDto>> weekday(
             @AuthenticationPrincipal CustomUserDetails customUserDetails
@@ -46,6 +48,7 @@ public class ExpenseStatsController {
         );
     }
 
+    @Override
     @GetMapping("/hourly")
     public ApiResponse<List<HourlyStatsDto>> hourly(
             @AuthenticationPrincipal CustomUserDetails user

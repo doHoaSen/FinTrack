@@ -13,11 +13,12 @@ import org.springframework.web.bind.annotation.*;
 @RestController
 @RequestMapping("/api/user")
 @RequiredArgsConstructor
-public class UserController {
+public class UserController implements UserControllerSpec {
 
     private final UserService userService;
 
     // 이메일 중복 확인
+    @Override
     @GetMapping("/check-email-duplicate")
     public ResponseEntity<ApiResponse<Boolean>> checkEmail(@RequestParam String email){
         boolean exists = userService.checkEmailDuplicate(email);
@@ -25,6 +26,7 @@ public class UserController {
     }
 
     // 회원가입
+    @Override
     @PostMapping("/signup")
     public ResponseEntity<ApiResponse<Void>> register(@Valid @RequestBody UserRegisterRequest request){
         userService.register(request);
@@ -32,6 +34,7 @@ public class UserController {
     }
 
     // 회원탈퇴
+    @Override
     @DeleteMapping("/me")
     public ApiResponse<?> withdraw(@AuthenticationPrincipal CustomUserDetails user){
         userService.withdraw(user.getId());

@@ -18,10 +18,11 @@ import java.util.List;
 @RestController
 @RequiredArgsConstructor
 @RequestMapping("/api/expenses")
-public class ExpenseController {
+public class ExpenseController implements ExpenseControllerSpec {
     private final ExpenseService expenseService;
 
     /*지출 등록*/
+    @Override
     @PostMapping
     public ResponseEntity<ApiResponse<Long>> createExpense(
             @AuthenticationPrincipal CustomUserDetails user,
@@ -36,6 +37,7 @@ public class ExpenseController {
     }
 
     /*최근 지출 조회*/
+    @Override
     @GetMapping("/recent")
     public ApiResponse<List<ExpenseResponse>> getRecentExpenses(
             @AuthenticationPrincipal CustomUserDetails user
@@ -47,6 +49,7 @@ public class ExpenseController {
     }
 
     /*월별 지출 조회*/
+    @Override
     @GetMapping
     public ApiResponse<PageResponse<ExpenseResponse>> getMonthlyExpenses(
             @AuthenticationPrincipal CustomUserDetails user,
@@ -72,6 +75,7 @@ public class ExpenseController {
     }
 
     /*지출 수정*/
+    @Override
     @PatchMapping("/{expenseId}")
     public ResponseEntity<ApiResponse<ExpenseResponse>> updateExpense(
             @AuthenticationPrincipal CustomUserDetails user,
@@ -88,6 +92,7 @@ public class ExpenseController {
 
 
     /*지출 삭제*/
+    @Override
     @DeleteMapping("/{expenseId}")
     public ResponseEntity<ApiResponse<Void>> deleteExpense(
             @AuthenticationPrincipal CustomUserDetails user,
