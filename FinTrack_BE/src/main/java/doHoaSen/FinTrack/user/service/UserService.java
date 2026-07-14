@@ -39,8 +39,11 @@ public class UserService {
         LocalDateTime graceLimit = LocalDateTime.now().minusMonths(DELETE_GRACE_MONTHS);
 
         if (deletedAt != null && deletedAt.isAfter(graceLimit)) {
-            // 탈퇴한지 6개월 이내 -> 계정 복구
-            restoreUser(oldUser, request);
+            // 탈퇴한지 6개월 이내 -> 기존 비밀번호가 일치할 때만 계정 복구 (타인이 이메일만으로 복구하지 못하도록)
+            if (!passwordEncoder.matches(request.getPassword(), oldUser.getPassword())) {
+                throw new IllegalArgumentException("이미 사용 중인 이메일입니다.");
+            }
+            restoreUser(oldUser);
         } else {
             // 기존 계정 완전 삭제 후 새 계정 생성
             hardDeleteUser(oldUser);
@@ -63,12 +66,10 @@ public class UserService {
         userRepository.save(user);
     }
 
-    /* 탈퇴 계정 복구 */
-    private void restoreUser(User oldUser, UserRegisterRequest request){
+    /* 탈퇴 계정 복구 (비밀번호 일치 확인 후에만 호출됨) */
+    private void restoreUser(User oldUser){
         oldUser.setDeleted(false);
         oldUser.setDeletedAt(null);
-        oldUser.setName(request.getName());
-        oldUser.setPassword(passwordEncoder.encode(request.getPassword()));
 
         userRepository.save(oldUser);
     }
