@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import {
   Box,
   Typography,
@@ -27,6 +27,7 @@ import type {
 } from "../features/dashboard/api";
 import type { HourlyStat } from "../components/dashboard/util/normalizeHourlyStats";
 import type { CategoryStat } from "../components/dashboard/CategoryExpenseChart";
+import { useCategoryStore } from "../store/categoryStore";
 import WeekdayExpenseChart from "../components/dashboard/WeekdayExpenseChart";
 import HourlyExpenseChart from "../components/dashboard/HourlyExpenseChart";
 import MonthlyExpenseChart from "../components/dashboard/MonthlyExpenseChart";
@@ -134,10 +135,26 @@ function AnalyticsPage() {
   const [feedback, setFeedback] = useState<FeedbackResponse | null>(null);
   const [weekdayStats, setWeekdayStats] = useState<WeekdayStat[]>([]);
   const [hourlyStats, setHourlyStats] = useState<HourlyStat[]>([]);
-  const [categoryStats, setCategoryStats] = useState<CategoryStat[]>([]);
+  const [categoryTotals, setCategoryTotals] = useState<Record<string, number>>({});
   const [monthlyStats, setMonthlyStats] = useState<MonthlyStat[]>([]);
   const [monthlyTotal, setMonthlyTotal] = useState(0);
   const [error, setError] = useState("");
+
+  const categories = useCategoryStore((s) => s.categories);
+  const fetchCategoryList = useCategoryStore((s) => s.fetchCategories);
+
+  // 카테고리 이름 -> id 매핑이 늦게 로드되어도(레이스 컨디션) 다시 계산되도록 useMemo로 파생
+  const categoryStats = useMemo<CategoryStat[]>(
+    () =>
+      Object.entries(categoryTotals)
+        .map(([name, amount]) => ({
+          id: categories.find((c) => c.name === name)?.id ?? -1,
+          name,
+          amount: Number(amount),
+        }))
+        .sort((a, b) => b.amount - a.amount),
+    [categoryTotals, categories]
+  );
 
   useEffect(() => {
     getDashboardApi()
@@ -150,16 +167,10 @@ function AnalyticsPage() {
         const currentMonth = new Date().getMonth() + 1;
         const currentStat = data.monthlyStats.find((s) => s.month === currentMonth);
         setMonthlyTotal(currentStat?.amount ?? 0);
-
-        if (data.categoryTotals) {
-          setCategoryStats(
-            Object.entries(data.categoryTotals)
-              .map(([name, amount]) => ({ name, amount: Number(amount) }))
-              .sort((a, b) => b.amount - a.amount)
-          );
-        }
+        setCategoryTotals(data.categoryTotals ?? {});
       })
       .catch(() => setError("데이터를 불러오지 못했습니다."));
+    fetchCategoryList();
   }, []);
 
   const fb = feedback;

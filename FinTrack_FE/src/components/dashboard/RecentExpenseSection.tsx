@@ -21,37 +21,25 @@ import LocalCafeIcon from "@mui/icons-material/LocalCafe";
 import CategoryIcon from "@mui/icons-material/Category";
 import type { SvgIconComponent } from "@mui/icons-material";
 import type { Expense } from "../../store/expenseStore";
+import { getCategoryColor } from "../../utils/categoryColor";
 
-type CategoryMeta = {
-  icon: SvgIconComponent;
-  color: string;
-  bg: string;
-};
+// 아이콘 모양은 이름 키워드로 매칭, 색상은 카테고리별 커스터마이징 값(getCategoryColor)을 그대로 사용
+const ICON_SHAPE_MAP: { keywords: string[]; icon: SvgIconComponent }[] = [
+  { keywords: ["식비"], icon: RestaurantIcon },
+  { keywords: ["교통"], icon: DirectionsBusIcon },
+  { keywords: ["쇼핑"], icon: ShoppingBagIcon },
+  { keywords: ["의료", "건강"], icon: LocalHospitalIcon },
+  { keywords: ["문화", "여가"], icon: MovieIcon },
+  { keywords: ["주거"], icon: HomeIcon },
+  { keywords: ["교육"], icon: SchoolIcon },
+  { keywords: ["카페"], icon: LocalCafeIcon },
+];
 
-const CATEGORY_MAP: Record<string, CategoryMeta> = {
-  식비:    { icon: RestaurantIcon,    color: "#e65100", bg: "#fff3e0" },
-  교통:    { icon: DirectionsBusIcon, color: "#1565c0", bg: "#e3f2fd" },
-  쇼핑:    { icon: ShoppingBagIcon,   color: "#6a1b9a", bg: "#f3e5f5" },
-  의료:    { icon: LocalHospitalIcon, color: "#c62828", bg: "#ffebee" },
-  건강:    { icon: LocalHospitalIcon, color: "#c62828", bg: "#ffebee" },
-  문화:    { icon: MovieIcon,         color: "#00695c", bg: "#e0f2f1" },
-  여가:    { icon: MovieIcon,         color: "#00695c", bg: "#e0f2f1" },
-  주거:    { icon: HomeIcon,          color: "#4e342e", bg: "#efebe9" },
-  교육:    { icon: SchoolIcon,        color: "#283593", bg: "#e8eaf6" },
-  카페:    { icon: LocalCafeIcon,     color: "#f57f17", bg: "#fffde7" },
-};
-
-const DEFAULT_META: CategoryMeta = {
-  icon: CategoryIcon,
-  color: "#546e7a",
-  bg: "#eceff1",
-};
-
-function getCategoryMeta(categoryName: string): CategoryMeta {
-  for (const key of Object.keys(CATEGORY_MAP)) {
-    if (categoryName.includes(key)) return CATEGORY_MAP[key];
-  }
-  return DEFAULT_META;
+function getCategoryIcon(categoryName: string): SvgIconComponent {
+  return (
+    ICON_SHAPE_MAP.find(({ keywords }) => keywords.some((k) => categoryName.includes(k)))?.icon ??
+    CategoryIcon
+  );
 }
 
 function formatExpenseAt(expenseAt: string | null): string {
@@ -119,8 +107,9 @@ function RecentExpenseSection({ expenses, onDeleteExpense, onEditExpense, onMore
         ) : (
           <Box sx={{ flex: 1, overflowY: "auto" }}>
             {displayed.map((e, idx) => {
-              const meta = getCategoryMeta(e.categoryName ?? "");
-              const Icon = meta.icon;
+              const Icon = getCategoryIcon(e.categoryName ?? "");
+              const color = getCategoryColor(e.categoryId);
+              const bg = `${color}1a`;
               const label = e.memo?.trim() || e.categoryName || "기타";
               const dateStr = formatExpenseAt(e.expenseAt);
               const amountText =
@@ -145,11 +134,11 @@ function RecentExpenseSection({ expenses, onDeleteExpense, onEditExpense, onMore
                       sx={{
                         width: 40,
                         height: 40,
-                        bgcolor: meta.bg,
+                        bgcolor: bg,
                         flexShrink: 0,
                       }}
                     >
-                      <Icon sx={{ fontSize: 20, color: meta.color }} />
+                      <Icon sx={{ fontSize: 20, color }} />
                     </Avatar>
 
                     {/* 상호명 + 날짜 */}

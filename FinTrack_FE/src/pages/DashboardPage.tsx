@@ -4,7 +4,7 @@ import RecentExpenseSection from "../components/dashboard/RecentExpenseSection";
 import FeedbackSection from "../components/dashboard/FeedbackSection";
 import TargetSettingDialog from "../components/dashboard/TargetSettingDialog";
 
-import { useEffect, useRef, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { getDashboardApi } from "../features/dashboard/api";
 import type { MonthlyStat, TargetResponse, FeedbackResponse } from "../features/dashboard/api";
@@ -13,6 +13,7 @@ import { getRecentExpensesApi } from "../features/expense/api";
 import type { Expense } from "../store/expenseStore";
 import { useExpenseStore } from "../store/expenseStore";
 import { useDashboardStore } from "../store/dashboardStore";
+import { useCategoryStore } from "../store/categoryStore";
 import getRecentRange from "../components/dashboard/util/getRecentRange";
 import StatsTabsCard from "../components/dashboard/StatsTabsCard";
 import type { WeekdayStat } from "../features/dashboard/api";
@@ -128,13 +129,25 @@ function DashboardPage() {
   const [weekdayStats, setWeekdayStats] = useState<WeekdayStat[]>([]);
 
   const [hourlyStats, setHourlyStats] = useState<HourlyStat[]>([]);
-  const [categoryStats, setCategoryStats] = useState<CategoryStat[]>([]);
+  const [categoryTotals, setCategoryTotals] = useState<Record<string, number>>({});
+
+  const categories = useCategoryStore((s) => s.categories);
+  const fetchCategoryList = useCategoryStore((s) => s.fetchCategories);
+
+  // 카테고리 이름 -> id 매핑이 늦게 로드되어도(레이스 컨디션) 다시 계산되도록 useMemo로 파생
+  const categoryStats = useMemo<CategoryStat[]>(
+    () =>
+      Object.entries(categoryTotals).map(([name, amount]) => ({
+        id: categories.find((c) => c.name === name)?.id ?? -1,
+        name,
+        amount: Number(amount),
+      })),
+    [categoryTotals, categories]
+  );
 
   const fetchDashboardData = async () => {
     try {
       const data = await getDashboardApi();
-      console.log("📦 dashboard api data:", data);
-      console.log("📦 dashboard api data:", data);
 
       const currentMonth = new Date().getMonth() + 1;
       const currentMonthStat = data.monthlyStats.find(
@@ -147,22 +160,7 @@ function DashboardPage() {
       setHourlyStats(data.hourlyStats);
       setTarget(data.target);
       setFeedback(data.feedback);
-
-      if (data.categoryTotals) {
-      const converted = Object.entries(data.categoryTotals).map(
-        ([name, amount]) => ({
-          name,
-          amount: Number(amount),
-        })
-      );
-
-      console.log("✅ converted categoryStats", converted);
-      setCategoryStats(converted);
-    } else {
-      console.warn("❌ categoryTotals 없음", data);
-      setCategoryStats([]);
-    }
-
+      setCategoryTotals(data.categoryTotals ?? {});
     } catch {
       setError("대시보드 데이터를 불러오지 못했습니다.");
     }
@@ -173,6 +171,7 @@ function DashboardPage() {
   useEffect(() => {
     fetchDashboardData();
     fetchRecent();
+    fetchCategoryList();
   }, []);
 
 

@@ -9,10 +9,12 @@ import {
 } from "chart.js";
 import { Bar } from "react-chartjs-2";
 import { Box, Typography } from "@mui/material";
+import { getCategoryColor } from "../../utils/categoryColor";
 
 ChartJS.register(CategoryScale, LinearScale, BarElement, Tooltip);
 
 export type CategoryStat = {
+  id: number;
   name: string;
   amount: number;
 };
@@ -21,20 +23,6 @@ type Props = {
   data: CategoryStat[];
   total: number;
 };
-
-const COLORS = [
-  "rgba(25, 118, 210, 0.82)",
-  "rgba(237, 108, 2, 0.82)",
-  "rgba(156, 39, 176, 0.82)",
-  "rgba(46, 125, 50, 0.82)",
-  "rgba(211, 47, 47, 0.82)",
-  "rgba(2, 136, 209, 0.82)",
-  "rgba(245, 127, 23, 0.82)",
-  "rgba(0, 105, 92, 0.82)",
-];
-const COLORS_HOVER = [
-  "#1976d2","#ed6c02","#9c27b0","#2e7d32","#d32f2f","#0288d1","#f57f17","#00695c",
-];
 
 const TOOLTIP_STYLE = {
   backgroundColor: "rgba(255,255,255,0.97)",
@@ -87,8 +75,8 @@ function CategoryExpenseChart({ data, total = 0 }: Props) {
     datasets: [
       {
         data: sorted.map((d) => d.amount),
-        backgroundColor: sorted.map((_, i) => COLORS[i % COLORS.length]),
-        hoverBackgroundColor: sorted.map((_, i) => COLORS_HOVER[i % COLORS_HOVER.length]),
+        backgroundColor: sorted.map((d) => `${getCategoryColor(d.id)}d1`),
+        hoverBackgroundColor: sorted.map((d) => getCategoryColor(d.id)),
         borderRadius: 6,
         borderSkipped: false as const,
         barPercentage: 0.6,
