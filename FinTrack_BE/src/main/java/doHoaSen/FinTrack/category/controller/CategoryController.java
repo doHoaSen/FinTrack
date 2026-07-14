@@ -16,10 +16,11 @@ import java.util.List;
 @RestController
 @RequiredArgsConstructor
 @RequestMapping("/api/categories")
-public class CategoryController {
+public class CategoryController implements CategoryControllerSpec {
     private final CategoryService categoryService;
 
     /** 카테고리 목록 조회 */
+    @Override
     @GetMapping
     public ApiResponse<List<CategoryResponse>> getCategories(
             @AuthenticationPrincipal CustomUserDetails user
@@ -31,6 +32,7 @@ public class CategoryController {
     }
 
     /** 카테고리 추가 */
+    @Override
     @PostMapping
     public ApiResponse<Long> createCategory(
             @AuthenticationPrincipal CustomUserDetails user,
@@ -43,6 +45,7 @@ public class CategoryController {
     }
 
     /** 카테고리 수정 */
+    @Override
     @PutMapping("/{id}")
     public ApiResponse<Void> updateCategory(
             @AuthenticationPrincipal CustomUserDetails user,
@@ -54,6 +57,7 @@ public class CategoryController {
     }
 
     /** 카테고리 단순 삭제 */
+    @Override
     @DeleteMapping("/{id}")
     public ApiResponse<Void> deleteCategory(
             @AuthenticationPrincipal CustomUserDetails user,
@@ -64,6 +68,7 @@ public class CategoryController {
     }
 
     /** 카테고리 변경 후 삭제 */
+    @Override
     @PostMapping("/{id}/replace-and-delete")
     public ApiResponse<Void> replaceAndDeleteCategory(
             @AuthenticationPrincipal CustomUserDetails user,

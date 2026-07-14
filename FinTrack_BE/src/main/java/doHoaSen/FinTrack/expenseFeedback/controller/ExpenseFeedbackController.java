@@ -13,10 +13,11 @@ import org.springframework.web.bind.annotation.RestController;
 @RestController
 @RequestMapping("/api/expenses/feedback")
 @RequiredArgsConstructor
-public class ExpenseFeedbackController {
+public class ExpenseFeedbackController implements ExpenseFeedbackControllerSpec {
 
     private final ExpenseFeedbackService feedbackService;
 
+    @Override
     @GetMapping
     public ApiResponse<FeedbackResponse> getFeedback(
             @AuthenticationPrincipal CustomUserDetails user

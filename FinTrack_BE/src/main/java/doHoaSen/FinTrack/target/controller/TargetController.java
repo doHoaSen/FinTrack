@@ -18,13 +18,14 @@ import java.time.YearMonth;
 @RestController
 @RequestMapping("/api/targets")
 @RequiredArgsConstructor
-public class TargetController {
+public class TargetController implements TargetControllerSpec {
 
     private final TargetService targetService;
     private final ExpenseQueryRepository expenseQueryRepository;
     private final ExpenseStatsRepository expenseStatsRepository;
 
     /** 목표 생성 또는 수정 */
+    @Override
     @PostMapping
     public ApiResponse<TargetResponse> upsertTarget(
             @AuthenticationPrincipal CustomUserDetails user,
@@ -37,6 +38,7 @@ public class TargetController {
     }
 
     /** 이번 달 목표 조회 */
+    @Override
     @GetMapping
     public ApiResponse<TargetResponse> getTarget(
             @AuthenticationPrincipal CustomUserDetails user
@@ -48,6 +50,7 @@ public class TargetController {
     }
 
     /** 목표 수정 */
+    @Override
     @PutMapping
     public ApiResponse<TargetResponse> updateTarget(
             @AuthenticationPrincipal CustomUserDetails user,
@@ -60,6 +63,7 @@ public class TargetController {
     }
 
     /** 목표 삭제 */
+    @Override
     @DeleteMapping
     public ApiResponse<?> deleteTarget(
             @AuthenticationPrincipal CustomUserDetails user

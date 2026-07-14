@@ -13,9 +13,10 @@ import org.springframework.web.bind.annotation.RestController;
 @RestController
 @RequestMapping("/api/dashboard")
 @RequiredArgsConstructor
-public class DashboardController {
+public class DashboardController implements DashboardControllerSpec {
     private final DashboardService dashboardService;
 
+    @Override
     @GetMapping
     public ApiResponse<DashboardResponse> getDashboard(
             @AuthenticationPrincipal CustomUserDetails user
