@@ -96,11 +96,6 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
 
         // 다음 필터로 요청 전달
         filterChain.doFilter(request, response);
-
-        System.out.println("token = " + token);
-        System.out.println("validateToken = " + jwtProvider.validateToken(token));
-        System.out.println("email = " + email);
-
     }
 
 
