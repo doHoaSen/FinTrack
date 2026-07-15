@@ -1,6 +1,8 @@
 package doHoaSen.FinTrack.user.entity;
 
+import doHoaSen.FinTrack.category.entity.Category;
 import doHoaSen.FinTrack.expense.entity.Expense;
+import doHoaSen.FinTrack.target.entity.Target;
 import jakarta.persistence.*;
 import lombok.*;
 import org.hibernate.annotations.CreationTimestamp;
@@ -51,4 +53,11 @@ public class User {
 
     @OneToMany(mappedBy = "user", cascade = CascadeType.REMOVE)
     private List<Expense> expenses;
+
+    // 커스텀 카테고리(user=null인 기본 카테고리는 대상 아님)
+    @OneToMany(mappedBy = "user", cascade = CascadeType.REMOVE)
+    private List<Category> categories;
+
+    @OneToMany(mappedBy = "user", cascade = CascadeType.REMOVE)
+    private List<Target> targets;
 }
