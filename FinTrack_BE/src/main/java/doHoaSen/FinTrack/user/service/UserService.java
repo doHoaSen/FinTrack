@@ -1,5 +1,6 @@
 package doHoaSen.FinTrack.user.service;
 
+import doHoaSen.FinTrack.global.exception.NotFoundException;
 import doHoaSen.FinTrack.user.dto.UserRegisterRequest;
 import doHoaSen.FinTrack.user.entity.User;
 import doHoaSen.FinTrack.user.repository.UserRepository;
@@ -82,7 +83,7 @@ public class UserService {
     /* 회원 탈퇴 */
     public void withdraw(Long userId){
         User user = userRepository.findById(userId)
-                .orElseThrow(() -> new RuntimeException("유저 없음"));
+                .orElseThrow(() -> new NotFoundException("유저 없음"));
 
         user.setDeleted(true);
         user.setDeletedAt(LocalDateTime.now());

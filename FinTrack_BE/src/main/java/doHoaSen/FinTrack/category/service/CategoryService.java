@@ -7,6 +7,8 @@ import doHoaSen.FinTrack.category.entity.Category;
 import doHoaSen.FinTrack.category.repository.CategoryRepository;
 import doHoaSen.FinTrack.expense.repository.ExpenseRepository;
 import doHoaSen.FinTrack.global.exception.BadRequestException;
+import doHoaSen.FinTrack.global.exception.ForbiddenException;
+import doHoaSen.FinTrack.global.exception.NotFoundException;
 import doHoaSen.FinTrack.user.entity.User;
 import doHoaSen.FinTrack.user.repository.UserRepository;
 import lombok.RequiredArgsConstructor;
@@ -63,16 +65,16 @@ public class CategoryService {
     @Transactional
     public void updateCategory(Long userId, Long categoryId, CategoryUpdateRequest request){
         Category category = categoryRepository.findById(categoryId)
-                .orElseThrow(() -> new IllegalStateException("카테고리를 찾을 수 없습니다."));
+                .orElseThrow(() -> new NotFoundException("카테고리를 찾을 수 없습니다."));
 
         // 사용자 소유 검증
         if (category.getUser() == null || !category.getUser().getId().equals(userId)){
-            throw new IllegalStateException("수정 권한이 없습니다.");
+            throw new ForbiddenException("수정 권한이 없습니다.");
         }
 
         // 기본 카테고리 수정 금지
         if (category.isDefault()){
-            throw new IllegalStateException("기본 카테고리는 수정할 수 없습니다.");
+            throw new BadRequestException("기본 카테고리는 수정할 수 없습니다.");
         }
 
         // 이름 중복 체크
@@ -80,7 +82,7 @@ public class CategoryService {
                 .existsByNameAndUserOrUserIsNull(request.getName(), category.getUser());
 
         if (exists && !category.getName().equals(request.getName())){
-            throw new IllegalStateException("이미 존재하는 카테고리 이름입니다.");
+            throw new BadRequestException("이미 존재하는 카테고리 이름입니다.");
         }
 
         category.setName(request.getName());
@@ -93,22 +95,22 @@ public class CategoryService {
     public void deleteCategory(Long userId, Long categoryId) {
 
         Category category = categoryRepository.findById(categoryId)
-                .orElseThrow(() -> new IllegalStateException("카테고리를 찾을 수 없습니다."));
+                .orElseThrow(() -> new NotFoundException("카테고리를 찾을 수 없습니다."));
 
         // 사용자 소유 검증
         if (category.getUser() == null || !category.getUser().getId().equals(userId)) {
-            throw new IllegalStateException("삭제 권한이 없습니다.");
+            throw new ForbiddenException("삭제 권한이 없습니다.");
         }
 
         // 기본 카테고리 삭제 금지
         if (category.isDefault()) {
-            throw new IllegalStateException("기본 카테고리는 삭제할 수 없습니다.");
+            throw new BadRequestException("기본 카테고리는 삭제할 수 없습니다.");
         }
 
         long count = expenseRepository.countByCategoryId(categoryId);
 
         if (count > 0) {
-            throw new IllegalStateException(
+            throw new BadRequestException(
                     "이 카테고리를 사용하는 지출이 있어 삭제할 수 없습니다."
             );
         }
@@ -128,22 +130,22 @@ public class CategoryService {
         }
 
         Category deleteCategory = categoryRepository.findById(deleteCategoryId)
-                .orElseThrow(() -> new IllegalStateException("삭제할 카테고리 없음"));
+                .orElseThrow(() -> new NotFoundException("삭제할 카테고리 없음"));
 
         // 사용자 소유 + 기본 카테고리 보호
         if (deleteCategory.getUser() == null
                 || !deleteCategory.getUser().getId().equals(userId)
                 || deleteCategory.isDefault()) {
-            throw new IllegalStateException("삭제 권한이 없습니다.");
+            throw new ForbiddenException("삭제 권한이 없습니다.");
         }
 
         Category targetCategory = categoryRepository.findById(targetCategoryId)
-                .orElseThrow(() -> new IllegalStateException("대상 카테고리 없음"));
+                .orElseThrow(() -> new NotFoundException("대상 카테고리 없음"));
 
         // 대상 카테고리도 사용자 소유 or 기본 허용 여부 판단
         if (targetCategory.getUser() != null
                 && !targetCategory.getUser().getId().equals(userId)) {
-            throw new IllegalStateException("대상 카테고리에 대한 권한이 없습니다.");
+            throw new ForbiddenException("대상 카테고리에 대한 권한이 없습니다.");
         }
 
         // 지출 카테고리 일괄 변경
