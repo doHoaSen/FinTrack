@@ -3,6 +3,7 @@ package doHoaSen.FinTrack.auth.controller;
 import doHoaSen.FinTrack.auth.dto.LoginRequest;
 import doHoaSen.FinTrack.auth.dto.LoginResponse;
 import doHoaSen.FinTrack.auth.dto.UserInfoResponse;
+import doHoaSen.FinTrack.auth.exception.AuthErrorCode;
 import doHoaSen.FinTrack.auth.service.AuthService;
 import doHoaSen.FinTrack.global.exception.BadRequestException;
 import doHoaSen.FinTrack.global.response.ApiResponse;
@@ -79,7 +80,7 @@ public class AuthController implements AuthControllerSpec {
             }
         }
         if (refreshToken == null){
-            throw new BadRequestException("refresh token이 없습니다.");
+            throw new BadRequestException(AuthErrorCode.AUTH_REFRESH_TOKEN_MISSING);
         }
 
         String newAccessToken = authService.refresh(refreshToken);

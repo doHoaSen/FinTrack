@@ -10,10 +10,12 @@ import doHoaSen.FinTrack.expense.dto.PageResponse;
 import doHoaSen.FinTrack.expense.entity.Expense;
 import doHoaSen.FinTrack.expense.mapper.ExpenseMapper;
 import doHoaSen.FinTrack.expense.repository.ExpenseRepository;
+import doHoaSen.FinTrack.expense.exception.ExpenseErrorCode;
 import doHoaSen.FinTrack.global.exception.BadRequestException;
 import doHoaSen.FinTrack.global.exception.ForbiddenException;
 import doHoaSen.FinTrack.global.exception.NotFoundException;
 import doHoaSen.FinTrack.user.entity.User;
+import doHoaSen.FinTrack.user.exception.UserErrorCode;
 import doHoaSen.FinTrack.user.repository.UserRepository;
 import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.Page;
@@ -37,13 +39,13 @@ public class ExpenseService {
     // 지출 등록
     public Long createExpense(Long userId, ExpenseCreateRequest request){
         User user = userRepository.findById(userId)
-                .orElseThrow(() ->new NotFoundException("존재하지 않는 사용자입니다."));
+                .orElseThrow(() ->new NotFoundException(UserErrorCode.USER_NOT_FOUND));
 
         Category category = categoryRepository.findById(request.categoryId())
-                .orElseThrow(() -> new BadRequestException("카테고리 없음"));
+                .orElseThrow(() -> new BadRequestException(ExpenseErrorCode.EXPENSE_CATEGORY_NOT_FOUND));
 
         if (request.expenseAt() == null) {
-            throw new BadRequestException("지출 시각은 필수입니다.");
+            throw new BadRequestException(ExpenseErrorCode.EXPENSE_TIME_REQUIRED);
         }
 
         Expense expense = Expense.builder()
@@ -60,10 +62,10 @@ public class ExpenseService {
 
     private Expense getUserExpense(Long userId, Long expenseId) {
         Expense expense = expenseRepository.findById(expenseId)
-                .orElseThrow(() -> new NotFoundException("Expense not found"));
+                .orElseThrow(() -> new NotFoundException(ExpenseErrorCode.EXPENSE_NOT_FOUND));
 
         if (!expense.getUser().getId().equals(userId))
-            throw new ForbiddenException("본인의 지출만 수정 가능합니다.");
+            throw new ForbiddenException(ExpenseErrorCode.EXPENSE_FORBIDDEN);
 
         return expense;
     }
@@ -86,7 +88,7 @@ public class ExpenseService {
         }
         if (request.categoryId() != null) {
             Category category = categoryRepository.findById(request.categoryId())
-                    .orElseThrow(() -> new NotFoundException("카테고리 없음"));
+                    .orElseThrow(() -> new BadRequestException(ExpenseErrorCode.EXPENSE_CATEGORY_NOT_FOUND));
             expense.setCategory(category);
         }
         if (request.memo() != null) {

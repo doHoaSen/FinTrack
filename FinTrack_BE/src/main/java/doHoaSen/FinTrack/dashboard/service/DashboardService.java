@@ -3,6 +3,8 @@ package doHoaSen.FinTrack.dashboard.service;
 import doHoaSen.FinTrack.dashboard.dto.DashboardResponse;
 import doHoaSen.FinTrack.expenseFeedback.dto.FeedbackResponse;
 import doHoaSen.FinTrack.expenseFeedback.service.ExpenseFeedbackService;
+import doHoaSen.FinTrack.global.exception.NotFoundException;
+import doHoaSen.FinTrack.user.exception.UserErrorCode;
 import doHoaSen.FinTrack.expenseStatistics.repository.ExpenseQueryRepository;
 import doHoaSen.FinTrack.expenseStatistics.repository.ExpenseStatsRepository;
 import doHoaSen.FinTrack.target.dto.TargetResponse;
@@ -28,7 +30,7 @@ public class DashboardService {
     public DashboardResponse generateDashboard(Long userId) {
 
         User user = userRepository.findById(userId)
-                .orElseThrow(() -> new IllegalStateException("사용자 없음"));
+                .orElseThrow(() -> new NotFoundException(UserErrorCode.USER_NOT_FOUND));
 
         int joinedYear = user.getCreatedAt().getYear();
 

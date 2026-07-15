@@ -7,6 +7,7 @@ import io.jsonwebtoken.SignatureAlgorithm;
 import io.jsonwebtoken.security.Keys;
 import io.jsonwebtoken.security.SignatureException;
 import jakarta.annotation.PostConstruct;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Component;
 
@@ -14,6 +15,7 @@ import java.security.Key;
 import java.util.Date;
 
 
+@Slf4j
 @Component
 public class JwtProvider {
 
@@ -66,13 +68,13 @@ public class JwtProvider {
             Jwts.parserBuilder().setSigningKey(key).build().parseClaimsJws(token);
             return true;
         } catch(ExpiredJwtException e){
-            System.out.println("JWT 만료됨");
+            log.debug("JWT 만료됨");
         } catch (MalformedJwtException e){
-            System.out.println("JWT 형식이 올바르지 않음");
+            log.debug("JWT 형식이 올바르지 않음");
         } catch (SignatureException e){
-            System.out.println("JWT 서명 검증 실패");
+            log.debug("JWT 서명 검증 실패");
         } catch (Exception e) {
-            System.out.println("JWT 검증 중 예외 발생");
+            log.debug("JWT 검증 중 예외 발생");
         }
         return false;
     }

@@ -1,7 +1,6 @@
 package doHoaSen.FinTrack.global.exception;
 
 import doHoaSen.FinTrack.global.response.ApiResponse;
-import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.MethodArgumentNotValidException;
 import org.springframework.web.bind.annotation.ExceptionHandler;
@@ -13,42 +12,29 @@ public class GlobalExceptionHandler {
     @ExceptionHandler(MethodArgumentNotValidException.class)
     public ResponseEntity<ApiResponse<Void>> handleValidationException(MethodArgumentNotValidException ex){
         String errorMessage = ex.getBindingResult().getFieldError().getDefaultMessage();
-        return ResponseEntity.status(HttpStatus.BAD_REQUEST)
-                .body(ApiResponse.failure(errorMessage));
+        return ResponseEntity.status(CommonErrorCode.VALIDATION_ERROR.getStatus())
+                .body(ApiResponse.failure(CommonErrorCode.VALIDATION_ERROR, errorMessage));
     }
 
     @ExceptionHandler(IllegalArgumentException.class)
     public ResponseEntity<ApiResponse<Void>>handleIllegalArgument(IllegalArgumentException ex) {
-        return ResponseEntity.status(HttpStatus.BAD_REQUEST)
-                .body(ApiResponse.failure(ex.getMessage()));
+        return ResponseEntity.status(CommonErrorCode.INVALID_ARGUMENT.getStatus())
+                .body(ApiResponse.failure(CommonErrorCode.INVALID_ARGUMENT, ex.getMessage()));
 
+    }
+
+    @ExceptionHandler(BusinessException.class)
+    public ResponseEntity<ApiResponse<Void>> handleBusinessException(BusinessException ex){
+        ErrorCode errorCode = ex.getErrorCode();
+        return ResponseEntity.status(errorCode.getStatus())
+                .body(ApiResponse.failure(errorCode));
     }
 
     @ExceptionHandler(Exception.class)
     public ResponseEntity<ApiResponse<Void>> handleException(Exception ex) {
         ex.printStackTrace();
         return ResponseEntity
-                .status(HttpStatus.INTERNAL_SERVER_ERROR)
-                .body(ApiResponse.failure("서버 오류가 발생했습니다."));
+                .status(CommonErrorCode.INTERNAL_SERVER_ERROR.getStatus())
+                .body(ApiResponse.failure(CommonErrorCode.INTERNAL_SERVER_ERROR));
     }
-
-    @ExceptionHandler(NotFoundException.class)
-    public ResponseEntity<ApiResponse<Void>> handleNotFound(NotFoundException e){
-        return ResponseEntity.status(HttpStatus.NOT_FOUND)
-                .body(ApiResponse.failure(e.getMessage()));
-    }
-
-    @ExceptionHandler(ForbiddenException.class)
-    public ResponseEntity<ApiResponse<Void>> handleForbidden(ForbiddenException e){
-        return ResponseEntity.status(HttpStatus.FORBIDDEN)
-                .body(ApiResponse.failure(e.getMessage()));
-    }
-
-    @ExceptionHandler(BadRequestException.class)
-    public ResponseEntity<ApiResponse<Void>> handleBadRequest(BadRequestException e){
-        return ResponseEntity.status(HttpStatus.BAD_REQUEST)
-                .body(ApiResponse.failure(e.getMessage()));
-    }
-
-
 }

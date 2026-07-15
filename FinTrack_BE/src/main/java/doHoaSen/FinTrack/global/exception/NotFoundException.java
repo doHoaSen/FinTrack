@@ -1,7 +1,7 @@
 package doHoaSen.FinTrack.global.exception;
 
-public class NotFoundException extends RuntimeException {
-    public NotFoundException(String message){
-        super(message);
+public class NotFoundException extends BusinessException {
+    public NotFoundException(ErrorCode errorCode) {
+        super(errorCode);
     }
 }

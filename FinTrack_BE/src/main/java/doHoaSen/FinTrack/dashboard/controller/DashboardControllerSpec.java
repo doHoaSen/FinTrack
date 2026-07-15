@@ -5,12 +5,20 @@ import doHoaSen.FinTrack.dashboard.dto.DashboardResponse;
 import doHoaSen.FinTrack.global.response.ApiResponse;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.Parameter;
+import io.swagger.v3.oas.annotations.media.Content;
+import io.swagger.v3.oas.annotations.media.Schema;
+import io.swagger.v3.oas.annotations.responses.ApiResponses;
 import io.swagger.v3.oas.annotations.tags.Tag;
 
 @Tag(name = "Dashboard", description = "대시보드 단일 조회 API")
 public interface DashboardControllerSpec {
 
     @Operation(summary = "대시보드 조회", description = "예산 현황, 최근 거래, 소비 패턴 등 대시보드에 필요한 데이터를 한 번에 조회합니다.")
+    @ApiResponses({
+            @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "404",
+                    description = "USER_NOT_FOUND: 사용자를 찾을 수 없습니다.",
+                    content = @Content(schema = @Schema(implementation = ApiResponse.class)))
+    })
     ApiResponse<DashboardResponse> getDashboard(
             @Parameter(hidden = true) CustomUserDetails user
     );
