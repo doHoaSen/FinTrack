@@ -10,6 +10,10 @@ import lombok.AllArgsConstructor;
 import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 import org.springframework.stereotype.Service;
 
+import static doHoaSen.FinTrack.auth.exception.AuthErrorCode.AUTH_ACCOUNT_NOT_FOUND;
+import static doHoaSen.FinTrack.auth.exception.AuthErrorCode.AUTH_INVALID_REFRESH_TOKEN;
+import static doHoaSen.FinTrack.auth.exception.AuthErrorCode.AUTH_PASSWORD_MISMATCH;
+
 @Service
 @AllArgsConstructor
 public class AuthService {
@@ -21,11 +25,11 @@ public class AuthService {
     public LoginResponse login (LoginRequest request){
         // 이메일 확인
         User user = userRepository.findByEmailAndIsDeletedFalse(request.getEmail())
-                .orElseThrow(() -> new IllegalArgumentException("존재하지 않거나 탈퇴한 계정입니다."));
+                .orElseThrow(() -> new BadRequestException(AUTH_ACCOUNT_NOT_FOUND));
 
         // 비밀번호 일치 확인
         if (!passwordEncoder.matches(request.getPassword(), user.getPassword())){
-            throw new IllegalArgumentException("비밀번호가 일치하지 않습니다.");
+            throw new BadRequestException(AUTH_PASSWORD_MISMATCH);
         }
 
         // JWT 발급
@@ -43,7 +47,7 @@ public class AuthService {
 
     public String refresh(String refreshToken){
         if (!jwtProvider.validateToken(refreshToken)) {
-            throw new BadRequestException("유효하지 않은 refresh token입니다.");
+            throw new BadRequestException(AUTH_INVALID_REFRESH_TOKEN);
         }
         String email = jwtProvider.getEmailFromToken(refreshToken);
         return jwtProvider.generateAccessToken(email);

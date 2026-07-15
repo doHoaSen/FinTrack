@@ -9,6 +9,9 @@ import doHoaSen.FinTrack.expense.dto.PageResponse;
 import doHoaSen.FinTrack.global.response.ApiResponse;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.Parameter;
+import io.swagger.v3.oas.annotations.media.Content;
+import io.swagger.v3.oas.annotations.media.Schema;
+import io.swagger.v3.oas.annotations.responses.ApiResponses;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import org.springframework.http.ResponseEntity;
 
@@ -18,6 +21,16 @@ import java.util.List;
 public interface ExpenseControllerSpec {
 
     @Operation(summary = "지출 등록", description = "새로운 지출 내역을 등록합니다.")
+    @ApiResponses({
+            @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "404",
+                    description = "USER_NOT_FOUND: 존재하지 않는 사용자입니다.",
+                    content = @Content(schema = @Schema(implementation = ApiResponse.class))),
+            @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "400",
+                    description = "VALIDATION_ERROR: 요청 값이 올바르지 않습니다. / "
+                            + "EXPENSE_CATEGORY_NOT_FOUND: 존재하지 않는 카테고리입니다. / "
+                            + "EXPENSE_TIME_REQUIRED: 지출 시각은 필수입니다.",
+                    content = @Content(schema = @Schema(implementation = ApiResponse.class)))
+    })
     ResponseEntity<ApiResponse<Long>> createExpense(
             @Parameter(hidden = true) CustomUserDetails user,
             @io.swagger.v3.oas.annotations.parameters.RequestBody(description = "등록할 지출 정보")
@@ -41,6 +54,17 @@ public interface ExpenseControllerSpec {
     );
 
     @Operation(summary = "지출 수정", description = "기존 지출 내역을 수정합니다.")
+    @ApiResponses({
+            @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "404",
+                    description = "EXPENSE_NOT_FOUND: 지출 내역을 찾을 수 없습니다.",
+                    content = @Content(schema = @Schema(implementation = ApiResponse.class))),
+            @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "403",
+                    description = "EXPENSE_FORBIDDEN: 본인의 지출만 수정 가능합니다.",
+                    content = @Content(schema = @Schema(implementation = ApiResponse.class))),
+            @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "400",
+                    description = "EXPENSE_CATEGORY_NOT_FOUND: 존재하지 않는 카테고리입니다.",
+                    content = @Content(schema = @Schema(implementation = ApiResponse.class)))
+    })
     ResponseEntity<ApiResponse<ExpenseResponse>> updateExpense(
             @Parameter(hidden = true) CustomUserDetails user,
             @Parameter(description = "수정할 지출 ID") Long expenseId,
@@ -49,6 +73,14 @@ public interface ExpenseControllerSpec {
     );
 
     @Operation(summary = "지출 삭제", description = "지출 내역을 삭제합니다.")
+    @ApiResponses({
+            @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "404",
+                    description = "EXPENSE_NOT_FOUND: 지출 내역을 찾을 수 없습니다.",
+                    content = @Content(schema = @Schema(implementation = ApiResponse.class))),
+            @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "403",
+                    description = "EXPENSE_FORBIDDEN: 본인의 지출만 수정 가능합니다.",
+                    content = @Content(schema = @Schema(implementation = ApiResponse.class)))
+    })
     ResponseEntity<ApiResponse<Void>> deleteExpense(
             @Parameter(hidden = true) CustomUserDetails user,
             @Parameter(description = "삭제할 지출 ID") Long expenseId

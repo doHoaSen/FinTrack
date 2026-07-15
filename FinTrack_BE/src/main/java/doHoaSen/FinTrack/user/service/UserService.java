@@ -1,9 +1,14 @@
 package doHoaSen.FinTrack.user.service;
 
+import doHoaSen.FinTrack.global.exception.BadRequestException;
 import doHoaSen.FinTrack.global.exception.NotFoundException;
 import doHoaSen.FinTrack.user.dto.UserRegisterRequest;
 import doHoaSen.FinTrack.user.entity.User;
 import doHoaSen.FinTrack.user.repository.UserRepository;
+
+import static doHoaSen.FinTrack.user.exception.UserErrorCode.EMAIL_ALREADY_EXISTS;
+import static doHoaSen.FinTrack.user.exception.UserErrorCode.PASSWORD_CONFIRM_MISMATCH;
+import static doHoaSen.FinTrack.user.exception.UserErrorCode.USER_NOT_FOUND;
 import lombok.RequiredArgsConstructor;
 import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 import org.springframework.stereotype.Service;
@@ -21,7 +26,7 @@ public class UserService {
 
     public void register(UserRegisterRequest request) {
         if (!request.getPassword().equals(request.getConfirmPassword())) {
-            throw new IllegalArgumentException("비밀번호가 일치하지 않습니다.");
+            throw new BadRequestException(PASSWORD_CONFIRM_MISMATCH);
         }
         Optional<User> existed = userRepository.findByEmail(request.getEmail());
 
@@ -32,7 +37,7 @@ public class UserService {
 
         User oldUser = existed.get();
         if (!oldUser.isDeleted()) {
-            throw new IllegalArgumentException("이미 사용 중인 이메일입니다.");
+            throw new BadRequestException(EMAIL_ALREADY_EXISTS);
         }
 
         // 탈퇴했던 계정인 경우
@@ -42,7 +47,7 @@ public class UserService {
         if (deletedAt != null && deletedAt.isAfter(graceLimit)) {
             // 탈퇴한지 6개월 이내 -> 기존 비밀번호가 일치할 때만 계정 복구 (타인이 이메일만으로 복구하지 못하도록)
             if (!passwordEncoder.matches(request.getPassword(), oldUser.getPassword())) {
-                throw new IllegalArgumentException("이미 사용 중인 이메일입니다.");
+                throw new BadRequestException(EMAIL_ALREADY_EXISTS);
             }
             restoreUser(oldUser);
         } else {
@@ -83,7 +88,7 @@ public class UserService {
     /* 회원 탈퇴 */
     public void withdraw(Long userId){
         User user = userRepository.findById(userId)
-                .orElseThrow(() -> new NotFoundException("유저 없음"));
+                .orElseThrow(() -> new NotFoundException(USER_NOT_FOUND));
 
         user.setDeleted(true);
         user.setDeletedAt(LocalDateTime.now());
