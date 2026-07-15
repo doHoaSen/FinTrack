@@ -9,6 +9,12 @@ import lombok.*;
 @NoArgsConstructor
 @AllArgsConstructor
 @Builder
+@Table(
+        name = "target",
+        indexes = {
+                @Index(name = "idx_target_user_year_month", columnList = "user_id, year, month")
+        }
+)
 public class Target {
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
